@@ -1,5 +1,6 @@
 package my.projects.classroomschedulerapp.controller;
 
+import my.projects.classroomschedulerapp.dto.BatchStatusUpdateRequestDto;
 import my.projects.classroomschedulerapp.dto.RecurringScheduleRequestDto;
 import my.projects.classroomschedulerapp.dto.ScheduleDto;
 import my.projects.classroomschedulerapp.model.Schedule;
@@ -81,5 +82,14 @@ public class ScheduleController {
     public ResponseEntity<List<ScheduleDto>> createRecurringSchedule(@RequestBody RecurringScheduleRequestDto requestDto) {
         List<ScheduleDto> createdSchedules = scheduleService.createRecurringSchedule(requestDto);
         return new ResponseEntity<>(createdSchedules, HttpStatus.CREATED);
+    }
+
+    // This endpoint allows for batch updating of schedule statuses
+    @PatchMapping("/batch/status")
+    public ResponseEntity<List<ScheduleDto>> updateScheduleStatusBatch(
+            @RequestBody BatchStatusUpdateRequestDto request) {
+        List<ScheduleDto> updatedSchedules = scheduleService.updateScheduleStatusBatch(
+                request.getIds(), request.getStatus());
+        return ResponseEntity.ok(updatedSchedules);
     }
 }

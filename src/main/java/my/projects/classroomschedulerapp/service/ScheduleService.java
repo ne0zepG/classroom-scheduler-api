@@ -231,6 +231,31 @@ public class ScheduleService {
         return dates;
     }
 
+    // Batch update status for multiple schedules
+    public List<ScheduleDto> updateScheduleStatusBatch(List<Long> ids, Schedule.Status status) {
+        // Find all schedules with the given IDs
+        List<Schedule> schedules = scheduleRepository.findAllById(ids);
+
+        // Check if any schedules were not found
+        if (schedules.size() < ids.size()) {
+            // Log a warning
+            System.out.println("Some schedules were not found during batch update");
+        }
+
+        // Update status for all found schedules
+        for (Schedule schedule : schedules) {
+            schedule.setStatus(status);
+        }
+
+        // Save all at once (this uses a single transaction)
+        List<Schedule> updatedSchedules = scheduleRepository.saveAll(schedules);
+
+        // Convert to DTOs and return
+        return updatedSchedules.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
     // Update the time conflict check to work with LocalTime directly
     private boolean hasTimeConflict(Schedule existingSchedule, LocalTime newStartTime, LocalTime newEndTime) {
         return !newEndTime.isBefore(existingSchedule.getStartTime()) &&
