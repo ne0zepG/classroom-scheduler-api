@@ -103,7 +103,7 @@ public class ScheduleService {
         for (Schedule existingSchedule : conflictingSchedules) {
             // Skip comparing with itself
             if (!existingSchedule.getId().equals(id) && hasTimeConflict(existingSchedule, scheduleDto)) {
-                throw new ScheduleConflictException("The room is already booked during the requested time");
+                throw new ScheduleConflictException("The room has already an schedule during the requested time");
             }
         }
 
