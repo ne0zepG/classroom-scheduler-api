@@ -1,5 +1,8 @@
 package my.projects.classroomschedulerapp.service;
 
+import my.projects.classroomschedulerapp.dto.BaseScheduleDto;
+import my.projects.classroomschedulerapp.dto.RecurrencePatternDto;
+import my.projects.classroomschedulerapp.dto.RecurringScheduleRequestDto;
 import my.projects.classroomschedulerapp.dto.ScheduleDto;
 import my.projects.classroomschedulerapp.exception.ScheduleConflictException;
 import my.projects.classroomschedulerapp.exception.ResourceNotFoundException;
@@ -12,6 +15,8 @@ import my.projects.classroomschedulerapp.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -158,5 +163,77 @@ public class ScheduleService {
                 schedule.getPurpose(),
                 schedule.getStatus()
         );
+    }
+
+    public List<ScheduleDto> createRecurringSchedule(RecurringScheduleRequestDto requestDto) {
+        // Get recurrence pattern
+        RecurrencePatternDto pattern = requestDto.getRecurrencePattern();
+        BaseScheduleDto baseSchedule = requestDto.getBaseSchedule();
+
+        // Validate room and user exist
+        Room room = roomRepository.findById(baseSchedule.getRoomId())
+                .orElseThrow(() -> new ResourceNotFoundException("Room not found with id: " + baseSchedule.getRoomId()));
+
+        User user = userRepository.findById(baseSchedule.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + baseSchedule.getUserId()));
+
+        // Generate all dates in the pattern
+        List<LocalDate> scheduleDates = generateDatesByPattern(pattern);
+
+        // Check for conflicts on all dates
+        for (LocalDate date : scheduleDates) {
+            List<Schedule> conflictingSchedules = scheduleRepository.findByRoomAndDate(room, date);
+            for (Schedule existingSchedule : conflictingSchedules) {
+                if (hasTimeConflict(existingSchedule, baseSchedule.getStartTime(), baseSchedule.getEndTime())) {
+                    throw new ScheduleConflictException("The room has already a schedule during the requested time on " + date);
+                }
+            }
+        }
+
+        // Create schedules for all dates
+        List<Schedule> createdSchedules = new ArrayList<>();
+
+        for (LocalDate date : scheduleDates) {
+            Schedule schedule = new Schedule();
+            schedule.setRoom(room);
+            schedule.setUser(user);
+            schedule.setDate(date);
+            schedule.setStartTime(baseSchedule.getStartTime());
+            schedule.setEndTime(baseSchedule.getEndTime());
+            schedule.setPurpose(baseSchedule.getPurpose());
+            schedule.setStatus(Schedule.Status.PENDING);
+
+            createdSchedules.add(scheduleRepository.save(schedule));
+        }
+
+        // Convert to DTOs and return
+        return createdSchedules.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    private List<LocalDate> generateDatesByPattern(RecurrencePatternDto pattern) {
+        List<LocalDate> dates = new ArrayList<>();
+        LocalDate currentDate = pattern.getStartDate();
+
+        while (!currentDate.isAfter(pattern.getEndDate())) {
+            // Get day of week (Java's DayOfWeek is 1-based with Monday=1, Sunday=7)
+            // Convert to our 0-based system (Sunday=0, Monday=1)
+            int dayOfWeek = currentDate.getDayOfWeek().getValue() % 7; // Convert to 0-based
+
+            if (pattern.getDaysOfWeek().contains(dayOfWeek)) {
+                dates.add(currentDate);
+            }
+
+            currentDate = currentDate.plusDays(1);
+        }
+
+        return dates;
+    }
+
+    // Update the time conflict check to work with LocalTime directly
+    private boolean hasTimeConflict(Schedule existingSchedule, LocalTime newStartTime, LocalTime newEndTime) {
+        return !newEndTime.isBefore(existingSchedule.getStartTime()) &&
+                !newStartTime.isAfter(existingSchedule.getEndTime());
     }
 }

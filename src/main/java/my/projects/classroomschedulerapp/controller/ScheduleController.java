@@ -1,5 +1,6 @@
 package my.projects.classroomschedulerapp.controller;
 
+import my.projects.classroomschedulerapp.dto.RecurringScheduleRequestDto;
 import my.projects.classroomschedulerapp.dto.ScheduleDto;
 import my.projects.classroomschedulerapp.model.Schedule;
 import my.projects.classroomschedulerapp.service.ScheduleService;
@@ -74,5 +75,11 @@ public class ScheduleController {
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<ScheduleDto>> getSchedulesByUser(@PathVariable Long userId) {
         return ResponseEntity.ok(scheduleService.getSchedulesByUser(userId));
+    }
+
+    @PostMapping("/recurring")
+    public ResponseEntity<List<ScheduleDto>> createRecurringSchedule(@RequestBody RecurringScheduleRequestDto requestDto) {
+        List<ScheduleDto> createdSchedules = scheduleService.createRecurringSchedule(requestDto);
+        return new ResponseEntity<>(createdSchedules, HttpStatus.CREATED);
     }
 }
