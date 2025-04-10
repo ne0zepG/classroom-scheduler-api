@@ -33,18 +33,21 @@ public class ScheduleService {
         this.userRepository = userRepository;
     }
 
+    // Get all schedules
     public List<ScheduleDto> getAllSchedules() {
         return scheduleRepository.findAll().stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
+    // Get schedule by ID
     public ScheduleDto getScheduleById(Long id) {
         Schedule schedule = scheduleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Schedule not found with id: " + id));
         return convertToDto(schedule);
     }
 
+    // Create a new schedule
     public ScheduleDto createSchedule(ScheduleDto scheduleDto) {
         // Check if room exists
         Room room = roomRepository.findById(scheduleDto.getRoomId())
@@ -76,6 +79,7 @@ public class ScheduleService {
         return convertToDto(savedSchedule);
     }
 
+    // Update schedule status
     public ScheduleDto updateScheduleStatus(Long id, Schedule.Status status) {
         Schedule schedule = scheduleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Schedule not found with id: " + id));
@@ -85,6 +89,7 @@ public class ScheduleService {
         return convertToDto(updatedSchedule);
     }
 
+    // Update schedule
     public ScheduleDto updateSchedule(Long id, ScheduleDto scheduleDto) {
         // Check if schedule exists
         Schedule schedule = scheduleRepository.findById(id)
@@ -120,6 +125,7 @@ public class ScheduleService {
         return convertToDto(updatedSchedule);
     }
 
+    // Delete schedule
     public void deleteSchedule(Long id) {
         if (!scheduleRepository.existsById(id)) {
             throw new ResourceNotFoundException("Schedule not found with id: " + id);
@@ -127,12 +133,14 @@ public class ScheduleService {
         scheduleRepository.deleteById(id);
     }
 
+    // Get schedules by date
     public List<ScheduleDto> getSchedulesByDate(LocalDate date) {
         return scheduleRepository.findAllSchedulesForDate(date).stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
+    // Get schedules by user ID
     public List<ScheduleDto> getSchedulesByUser(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
@@ -165,6 +173,7 @@ public class ScheduleService {
         );
     }
 
+    // Create a recurring schedule based on a pattern
     public List<ScheduleDto> createRecurringSchedule(RecurringScheduleRequestDto requestDto) {
         // Get recurrence pattern
         RecurrencePatternDto pattern = requestDto.getRecurrencePattern();
@@ -212,6 +221,7 @@ public class ScheduleService {
                 .collect(Collectors.toList());
     }
 
+    // Generate dates based on the recurrence pattern
     private List<LocalDate> generateDatesByPattern(RecurrencePatternDto pattern) {
         List<LocalDate> dates = new ArrayList<>();
         LocalDate currentDate = pattern.getStartDate();
@@ -229,6 +239,31 @@ public class ScheduleService {
         }
 
         return dates;
+    }
+
+    // Batch update status for multiple schedules
+    public List<ScheduleDto> updateScheduleStatusBatch(List<Long> ids, Schedule.Status status) {
+        // Find all schedules with the given IDs
+        List<Schedule> schedules = scheduleRepository.findAllById(ids);
+
+        // Check if any schedules were not found
+        if (schedules.size() < ids.size()) {
+            // Log a warning
+            System.out.println("Some schedules were not found during batch update");
+        }
+
+        // Update status for all found schedules
+        for (Schedule schedule : schedules) {
+            schedule.setStatus(status);
+        }
+
+        // Save all at once (this uses a single transaction)
+        List<Schedule> updatedSchedules = scheduleRepository.saveAll(schedules);
+
+        // Convert to DTOs and return
+        return updatedSchedules.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
     }
 
     // Update the time conflict check to work with LocalTime directly
