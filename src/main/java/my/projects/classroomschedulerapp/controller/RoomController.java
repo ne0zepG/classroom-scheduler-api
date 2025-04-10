@@ -29,32 +29,38 @@ public class RoomController {
         this.roomService = roomService;
     }
 
+    // This endpoint allows for retrieving all rooms
     @GetMapping
     public ResponseEntity<List<RoomDto>> getAllRooms() {
         return ResponseEntity.ok(roomService.getAllRooms());
     }
 
+    // This endpoint allows for retrieving a room by its ID
     @GetMapping("/{id}")
     public ResponseEntity<RoomDto> getRoomById(@PathVariable Long id) {
         return ResponseEntity.ok(roomService.getRoomById(id));
     }
 
+    // This endpoint allows for creating a new room
     @PostMapping
     public ResponseEntity<RoomDto> createRoom(@RequestBody RoomDto roomDto) {
         return new ResponseEntity<>(roomService.createRoom(roomDto), HttpStatus.CREATED);
     }
 
+    // This endpoint allows for updating an existing room
     @PutMapping("/{id}")
     public ResponseEntity<RoomDto> updateRoom(@PathVariable Long id, @RequestBody RoomDto roomDto) {
         return ResponseEntity.ok(roomService.updateRoom(id, roomDto));
     }
 
+    // This endpoint allows for deleting a room by its ID
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteRoom(@PathVariable Long id) {
         roomService.deleteRoom(id);
         return ResponseEntity.noContent().build();
     }
 
+    // This endpoint allows for retrieving all rooms that are available for a given date and time range
     @GetMapping("/available")
     public ResponseEntity<List<RoomDto>> findAvailableRooms(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
