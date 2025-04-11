@@ -86,6 +86,12 @@ public class ScheduleController {
         return ResponseEntity.ok(scheduleService.getSchedulesByUser(userId));
     }
 
+    @GetMapping("/email/{email}")
+    public ResponseEntity<List<ScheduleDto>> getSchedulesByEmail(@PathVariable String email) {
+        List<ScheduleDto> schedules = scheduleService.getSchedulesByEmail(email);
+        return ResponseEntity.ok(schedules);
+    }
+
     // This endpoint allows for creating a recurring schedule
     @PostMapping("/recurring")
     public ResponseEntity<List<ScheduleDto>> createRecurringSchedule(@RequestBody RecurringScheduleRequestDto requestDto) {
