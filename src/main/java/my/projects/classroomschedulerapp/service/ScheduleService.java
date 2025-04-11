@@ -266,6 +266,21 @@ public class ScheduleService {
                 .collect(Collectors.toList());
     }
 
+    // Batch delete schedules
+    public void deleteSchedulesBatch(List<Long> ids) {
+        // Find all schedules with the given IDs
+        List<Schedule> schedules = scheduleRepository.findAllById(ids);
+
+        // Check if any schedules were not found
+        if (schedules.size() < ids.size()) {
+            // Log a warning
+            System.out.println("Some schedules were not found during batch delete");
+        }
+
+        // Delete all found schedules at once
+        scheduleRepository.deleteAllInBatch(schedules);
+    }
+
     // Update the time conflict check to work with LocalTime directly
     private boolean hasTimeConflict(Schedule existingSchedule, LocalTime newStartTime, LocalTime newEndTime) {
         return !newEndTime.isBefore(existingSchedule.getStartTime()) &&
