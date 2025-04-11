@@ -101,4 +101,11 @@ public class ScheduleController {
                 request.getIds(), request.getStatus());
         return ResponseEntity.ok(updatedSchedules);
     }
+
+    // This endpoint allows for batch deletion of schedules
+    @DeleteMapping("/batch")
+    public ResponseEntity<Void> deleteSchedulesBatch(@RequestBody List<Long> ids) {
+        scheduleService.deleteSchedulesBatch(ids);
+        return ResponseEntity.noContent().build();
+    }
 }
