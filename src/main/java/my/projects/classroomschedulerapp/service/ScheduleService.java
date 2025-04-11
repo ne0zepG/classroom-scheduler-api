@@ -4,13 +4,15 @@ import my.projects.classroomschedulerapp.dto.BaseScheduleDto;
 import my.projects.classroomschedulerapp.dto.RecurrencePatternDto;
 import my.projects.classroomschedulerapp.dto.RecurringScheduleRequestDto;
 import my.projects.classroomschedulerapp.dto.ScheduleDto;
-import my.projects.classroomschedulerapp.exception.ScheduleConflictException;
 import my.projects.classroomschedulerapp.exception.ResourceNotFoundException;
-import my.projects.classroomschedulerapp.model.Schedule;
+import my.projects.classroomschedulerapp.exception.ScheduleConflictException;
+import my.projects.classroomschedulerapp.model.Course;
 import my.projects.classroomschedulerapp.model.Room;
+import my.projects.classroomschedulerapp.model.Schedule;
 import my.projects.classroomschedulerapp.model.User;
-import my.projects.classroomschedulerapp.repository.ScheduleRepository;
+import my.projects.classroomschedulerapp.repository.CourseRepository;
 import my.projects.classroomschedulerapp.repository.RoomRepository;
+import my.projects.classroomschedulerapp.repository.ScheduleRepository;
 import my.projects.classroomschedulerapp.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
@@ -25,11 +27,15 @@ public class ScheduleService {
 
     private final ScheduleRepository scheduleRepository;
     private final RoomRepository roomRepository;
+    private final CourseRepository courseRepository;
     private final UserRepository userRepository;
 
-    public ScheduleService(ScheduleRepository scheduleRepository, RoomRepository roomRepository, UserRepository userRepository) {
+    public ScheduleService(ScheduleRepository scheduleRepository,
+                           RoomRepository roomRepository,
+                           CourseRepository courseRepository, UserRepository userRepository) {
         this.scheduleRepository = scheduleRepository;
         this.roomRepository = roomRepository;
+        this.courseRepository = courseRepository;
         this.userRepository = userRepository;
     }
 
@@ -49,44 +55,20 @@ public class ScheduleService {
 
     // Create a new schedule
     public ScheduleDto createSchedule(ScheduleDto scheduleDto) {
-        // Check if room exists
-        Room room = roomRepository.findById(scheduleDto.getRoomId())
-                .orElseThrow(() -> new ResourceNotFoundException("Room not found with id: " + scheduleDto.getRoomId()));
-
-        // Check if user exists
-        User user = userRepository.findById(scheduleDto.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + scheduleDto.getUserId()));
+        // Find and validate entities
+        EntityResults entities = findAndValidateEntities(scheduleDto);
 
         // Check for schedule conflicts
-        List<Schedule> conflictingSchedules = scheduleRepository.findByRoomAndDate(room, scheduleDto.getDate());
-        for (Schedule existingSchedule : conflictingSchedules) {
-            if (hasTimeConflict(existingSchedule, scheduleDto)) {
-                throw new ScheduleConflictException("The room has already an schedule during the requested time");
-            }
-        }
+        checkForScheduleConflicts(entities.getRoom(), scheduleDto.getDate(),
+                scheduleDto.getStartTime(), scheduleDto.getEndTime(), null);
 
         // Create schedule
         Schedule schedule = new Schedule();
-        schedule.setRoom(room);
-        schedule.setUser(user);
-        schedule.setDate(scheduleDto.getDate());
-        schedule.setStartTime(scheduleDto.getStartTime());
-        schedule.setEndTime(scheduleDto.getEndTime());
-        schedule.setPurpose(scheduleDto.getPurpose());
+        populateScheduleFromDto(schedule, entities.getRoom(), entities.getCourse(), entities.getUser(), scheduleDto);
         schedule.setStatus(Schedule.Status.PENDING);
 
         Schedule savedSchedule = scheduleRepository.save(schedule);
         return convertToDto(savedSchedule);
-    }
-
-    // Update schedule status
-    public ScheduleDto updateScheduleStatus(Long id, Schedule.Status status) {
-        Schedule schedule = scheduleRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Schedule not found with id: " + id));
-        
-        schedule.setStatus(status);
-        Schedule updatedSchedule = scheduleRepository.save(schedule);
-        return convertToDto(updatedSchedule);
     }
 
     // Update schedule
@@ -95,34 +77,36 @@ public class ScheduleService {
         Schedule schedule = scheduleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Schedule not found with id: " + id));
 
-        // Check if room exists
-        Room room = roomRepository.findById(scheduleDto.getRoomId())
-                .orElseThrow(() -> new ResourceNotFoundException("Room not found with id: " + scheduleDto.getRoomId()));
+        // Find and validate entities
+        EntityResults entities = findAndValidateEntities(scheduleDto);
 
-        // Check if user exists
-        User user = userRepository.findById(scheduleDto.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + scheduleDto.getUserId()));
-
-        // Check for conflicts with other schedule (excluding this one)
-        List<Schedule> conflictingSchedules = scheduleRepository.findByRoomAndDate(room, scheduleDto.getDate());
-        for (Schedule existingSchedule : conflictingSchedules) {
-            // Skip comparing with itself
-            if (!existingSchedule.getId().equals(id) && hasTimeConflict(existingSchedule, scheduleDto)) {
-                throw new ScheduleConflictException("The room has already an schedule during the requested time");
-            }
-        }
+        // Check for conflicts with other schedules (excluding this one)
+        checkForScheduleConflicts(entities.getRoom(), scheduleDto.getDate(),
+                scheduleDto.getStartTime(), scheduleDto.getEndTime(), id);
 
         // Update schedule details
-        schedule.setRoom(room);
-        schedule.setUser(user);
-        schedule.setDate(scheduleDto.getDate());
-        schedule.setStartTime(scheduleDto.getStartTime());
-        schedule.setEndTime(scheduleDto.getEndTime());
-        schedule.setPurpose(scheduleDto.getPurpose());
+        populateScheduleFromDto(schedule, entities.getRoom(), entities.getCourse(), entities.getUser(), scheduleDto);
         // Note: We don't update the status here since that's done through a separate endpoint
 
         Schedule updatedSchedule = scheduleRepository.save(schedule);
         return convertToDto(updatedSchedule);
+    }
+    
+    // Utility class to hold entity lookup results
+    private static class EntityResults {
+        private final Room room;
+        private final Course course;
+        private final User user;
+
+        public EntityResults(Room room, Course course, User user) {
+            this.room = room;
+            this.course = course;
+            this.user = user;
+        }
+
+        public Room getRoom() { return room; }
+        public Course getCourse() { return course; }
+        public User getUser() { return user; }
     }
 
     // Delete schedule
@@ -150,6 +134,7 @@ public class ScheduleService {
                 .collect(Collectors.toList());
     }
 
+    // Get schedules by user email
     public List<ScheduleDto> getSchedulesByEmail(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
@@ -157,29 +142,6 @@ public class ScheduleService {
         return scheduleRepository.findByUser(user).stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
-    }
-
-    private boolean hasTimeConflict(Schedule existing, ScheduleDto requested) {
-        // Check if time periods overlap
-        return !((existing.getEndTime().isBefore(requested.getStartTime()) || 
-                existing.getEndTime().equals(requested.getStartTime())) ||
-                (existing.getStartTime().isAfter(requested.getEndTime()) || 
-                existing.getStartTime().equals(requested.getEndTime())));
-    }
-
-    private ScheduleDto convertToDto(Schedule schedule) {
-        return new ScheduleDto(
-                schedule.getId(),
-                schedule.getRoom().getId(),
-                schedule.getRoom().getRoomNumber(),
-                schedule.getUser().getId(),
-                schedule.getUser().getName(),
-                schedule.getDate(),
-                schedule.getStartTime(),
-                schedule.getEndTime(),
-                schedule.getPurpose(),
-                schedule.getStatus()
-        );
     }
 
     // Create a recurring schedule based on a pattern
@@ -192,8 +154,13 @@ public class ScheduleService {
         Room room = roomRepository.findById(baseSchedule.getRoomId())
                 .orElseThrow(() -> new ResourceNotFoundException("Room not found with id: " + baseSchedule.getRoomId()));
 
+        // Check if user exists
         User user = userRepository.findById(baseSchedule.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + baseSchedule.getUserId()));
+
+        // Check if course exists
+        Course course = courseRepository.findById(baseSchedule.getCourseId())
+                .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + baseSchedule.getCourseId()));
 
         // Generate all dates in the pattern
         List<LocalDate> scheduleDates = generateDatesByPattern(pattern);
@@ -218,7 +185,7 @@ public class ScheduleService {
             schedule.setDate(date);
             schedule.setStartTime(baseSchedule.getStartTime());
             schedule.setEndTime(baseSchedule.getEndTime());
-            schedule.setPurpose(baseSchedule.getPurpose());
+            schedule.setCourse(course);
             schedule.setStatus(Schedule.Status.PENDING);
 
             createdSchedules.add(scheduleRepository.save(schedule));
@@ -248,6 +215,16 @@ public class ScheduleService {
         }
 
         return dates;
+    }
+
+    // Update schedule status
+    public ScheduleDto updateScheduleStatus(Long id, Schedule.Status status) {
+        Schedule schedule = scheduleRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Schedule not found with id: " + id));
+
+        schedule.setStatus(status);
+        Schedule updatedSchedule = scheduleRepository.save(schedule);
+        return convertToDto(updatedSchedule);
     }
 
     // Batch update status for multiple schedules
@@ -295,4 +272,62 @@ public class ScheduleService {
         return !newEndTime.isBefore(existingSchedule.getStartTime()) &&
                 !newStartTime.isAfter(existingSchedule.getEndTime());
     }
+
+    // Helper method to find and validate entities
+    private EntityResults findAndValidateEntities(ScheduleDto scheduleDto) {
+        // Check if room exists
+        Room room = roomRepository.findById(scheduleDto.getRoomId())
+                .orElseThrow(() -> new ResourceNotFoundException("Room not found with id: " + scheduleDto.getRoomId()));
+
+        // Check if course exists
+        Course course = courseRepository.findById(scheduleDto.getCourseId())
+                .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + scheduleDto.getCourseId()));
+
+        // Check if user exists
+        User user = userRepository.findById(scheduleDto.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + scheduleDto.getUserId()));
+
+        return new EntityResults(room, course, user);
+    }
+
+    // Helper method to check for schedule conflicts
+    private void checkForScheduleConflicts(Room room, LocalDate date, LocalTime startTime, LocalTime endTime, Long excludeScheduleId) {
+        List<Schedule> conflictingSchedules = scheduleRepository.findByRoomAndDate(room, date);
+        for (Schedule existingSchedule : conflictingSchedules) {
+            // Skip comparing with itself if updating
+            if ((!existingSchedule.getId().equals(excludeScheduleId)) &&
+                    hasTimeConflict(existingSchedule, startTime, endTime)) {
+                throw new ScheduleConflictException("The room has already a schedule during the requested time");
+            }
+        }
+    }
+
+    // Helper method to populate schedule from DTO
+    private void populateScheduleFromDto(Schedule schedule, Room room, Course course, User user, ScheduleDto scheduleDto) {
+        schedule.setRoom(room);
+        schedule.setUser(user);
+        schedule.setDate(scheduleDto.getDate());
+        schedule.setStartTime(scheduleDto.getStartTime());
+        schedule.setEndTime(scheduleDto.getEndTime());
+        schedule.setCourse(course);
+    }
+
+    // Convert Schedule entity to ScheduleDto
+    private ScheduleDto convertToDto(Schedule schedule) {
+        return new ScheduleDto(
+                schedule.getId(),
+                schedule.getRoom().getId(),
+                schedule.getRoom().getRoomNumber(),
+                schedule.getUser().getId(),
+                schedule.getUser().getName(),
+                schedule.getDate(),
+                schedule.getStartTime(),
+                schedule.getEndTime(),
+                schedule.getCourse().getId(),
+                schedule.getCourse().getCourseCode(),
+                schedule.getCourse().getDescription(),
+                schedule.getStatus()
+        );
+    }
+    
 }
