@@ -20,6 +20,8 @@ public class ScheduleDto {
     private LocalDate date;
     private LocalTime startTime;
     private LocalTime endTime;
-    private String purpose;
+    private Long courseId;
+    private String courseCode;
+    private String courseDescription;
     private Schedule.Status status;
 }

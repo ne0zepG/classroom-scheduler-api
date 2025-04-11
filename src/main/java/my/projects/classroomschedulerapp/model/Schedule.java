@@ -43,9 +43,10 @@ public class Schedule {
     
     @Column(nullable = false)
     private LocalTime endTime;
-    
-    @Column(nullable = false)
-    private String purpose;
+
+    @ManyToOne
+    @JoinColumn(name = "course_id", nullable = false)
+    private Course course;
     
     @Enumerated(EnumType.STRING)
     private Status status;

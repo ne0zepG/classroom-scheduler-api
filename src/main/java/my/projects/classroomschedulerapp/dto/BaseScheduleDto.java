@@ -17,6 +17,8 @@ public class BaseScheduleDto {
     private String userName;
     private LocalTime startTime;
     private LocalTime endTime;
-    private String purpose;
+    private Long courseId;
+    private String courseCode;
+    private String courseDescription;
     private Schedule.Status status;
 }

@@ -1,11 +1,15 @@
 package my.projects.classroomschedulerapp.config;
 
+import my.projects.classroomschedulerapp.model.Course;
 import my.projects.classroomschedulerapp.model.Schedule;
 import my.projects.classroomschedulerapp.model.Building;
+import my.projects.classroomschedulerapp.model.Department;
 import my.projects.classroomschedulerapp.model.Room;
 import my.projects.classroomschedulerapp.model.User;
+import my.projects.classroomschedulerapp.repository.CourseRepository;
 import my.projects.classroomschedulerapp.repository.ScheduleRepository;
 import my.projects.classroomschedulerapp.repository.BuildingRepository;
+import my.projects.classroomschedulerapp.repository.DepartmentRepository;
 import my.projects.classroomschedulerapp.repository.RoomRepository;
 import my.projects.classroomschedulerapp.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
@@ -24,13 +28,20 @@ public class DataInitializer implements CommandLineRunner {
     private final BuildingRepository buildingRepository;
     private final RoomRepository roomRepository;
     private final UserRepository userRepository;
+    private final DepartmentRepository departmentRepository;
+    private final CourseRepository courseRepository;
     private final PasswordEncoder passwordEncoder;
 
     public DataInitializer(ScheduleRepository scheduleRepository, BuildingRepository buildingRepository,
-                           RoomRepository roomRepository, UserRepository userRepository, PasswordEncoder passwordEncoder) {
+                           RoomRepository roomRepository,
+                           DepartmentRepository departmentRepository,
+                           CourseRepository courseRepository,
+                           UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.scheduleRepository = scheduleRepository;
         this.buildingRepository = buildingRepository;
         this.roomRepository = roomRepository;
+        this.departmentRepository = departmentRepository;
+        this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
@@ -60,13 +71,11 @@ public class DataInitializer implements CommandLineRunner {
         // Create buildings if they don't exist
         Map<String, Building> buildings = new HashMap<>();
         if (buildingRepository.count() == 0) {
-            // Create ST Building
             Building stBuilding = new Building(); 
             stBuilding.setName("ST Building");
             buildingRepository.save(stBuilding);
             buildings.put("ST Building", stBuilding);
-            
-            // Add more buildings as needed
+
             Building libBuilding = new Building();
             libBuilding.setName("Library Building");
             buildingRepository.save(libBuilding);
@@ -84,7 +93,6 @@ public class DataInitializer implements CommandLineRunner {
 
         // Add example rooms if not exists
         if (roomRepository.count() == 0) {
-            // ST Building rooms
             Room room1 = new Room();
             room1.setRoomNumber("ST101");
             room1.setBuilding(buildings.get("ST Building"));
@@ -101,7 +109,6 @@ public class DataInitializer implements CommandLineRunner {
             room2.setHasComputers(false);
             roomRepository.save(room2);
 
-            // Computer Lab
             Room room3 = new Room();
             room3.setRoomNumber("ST208");
             room3.setBuilding(buildings.get("ST Building"));
@@ -110,7 +117,6 @@ public class DataInitializer implements CommandLineRunner {
             room3.setHasComputers(false);
             roomRepository.save(room3);
 
-            // Lecture Hall
             Room room4 = new Room();
             room4.setRoomNumber("ST411");
             room4.setBuilding(buildings.get("ST Building"));
@@ -118,8 +124,7 @@ public class DataInitializer implements CommandLineRunner {
             room4.setHasProjector(true);
             room4.setHasComputers(false);
             roomRepository.save(room4);
-            
-            // Add some rooms in other buildings
+
             Room libRoom = new Room();
             libRoom.setRoomNumber("LIB101");
             libRoom.setBuilding(buildings.get("Library Building"));
@@ -137,6 +142,70 @@ public class DataInitializer implements CommandLineRunner {
             roomRepository.save(adminRoom);
         }
 
+        // Create departments if they don't exist
+        Map<String, Department> departments = new HashMap<>();
+        if (departmentRepository.count() == 0) {
+            Department engDepartment = new Department();
+            engDepartment.setName("College of Engineering");
+            departmentRepository.save(engDepartment);
+            departments.put("College of Engineering", engDepartment);
+
+            Department sciDepartment = new Department();
+            sciDepartment.setName("College of Science");
+            departmentRepository.save(sciDepartment);
+            departments.put("College of Science", sciDepartment);
+
+            Department humanitiesDepartment = new Department();
+            humanitiesDepartment.setName("College of Humanities");
+            departmentRepository.save(humanitiesDepartment);
+            departments.put("College of Humanities", humanitiesDepartment);
+        } else {
+            departmentRepository.findAll().forEach(department ->
+                    departments.put(department.getName(), department));
+        }
+
+        // Create courses if they don't exist
+        Map<String, Course> courses = new HashMap<>();
+        if (courseRepository.count() == 0) {
+            Course compEngCourse = new Course();
+            compEngCourse.setCourseCode("CPE111");
+            compEngCourse.setDescription("Computer Engineering as Discipline");
+            compEngCourse.setDepartment(departments.get("College of Engineering"));
+            courseRepository.save(compEngCourse);
+            courses.put("Computer Engineering as Discipline", compEngCourse);
+
+            Course itCourse = new Course();
+            itCourse.setCourseCode("GEC9");
+            itCourse.setDescription("Living in I.T. Era");
+            itCourse.setDepartment(departments.get("College of Engineering"));
+            courseRepository.save(itCourse);
+            courses.put("Living in I.T. Era", itCourse);
+
+            Course mathCourse = new Course();
+            mathCourse.setCourseCode("CPE121");
+            mathCourse.setDescription("Discrete Mathematics");
+            mathCourse.setDepartment(departments.get("College of Science"));
+            courseRepository.save(mathCourse);
+            courses.put("Discrete Mathematics", mathCourse);
+
+            Course envCourse = new Course();
+            envCourse.setCourseCode("CPE417");
+            envCourse.setDescription("Environmental Science and Engineering");
+            envCourse.setDepartment(departments.get("College of Science"));
+            courseRepository.save(envCourse);
+            courses.put("Environmental Science and Engineering", envCourse);
+
+            Course numMethods = new Course();
+            numMethods.setCourseCode("CPE223");
+            numMethods.setDescription("Numerical Methods");
+            numMethods.setDepartment(departments.get("College of Science"));
+            courseRepository.save(numMethods);
+            courses.put("Numerical Methods", numMethods);
+        } else {
+            courseRepository.findAll().forEach(course ->
+                    courses.put(course.getDescription(), course));
+        }
+
         // Create sample schedules if none exist
         if (scheduleRepository.count() == 0) {
             // Get users
@@ -151,58 +220,54 @@ public class DataInitializer implements CommandLineRunner {
 
             LocalDate today = LocalDate.now();
 
-            // Morning class in A101
+            // Dummy schedules
             Schedule schedule1 = new Schedule();
             schedule1.setRoom(roomST101);
             schedule1.setUser(faculty);
             schedule1.setDate(today);
             schedule1.setStartTime(LocalTime.of(9, 0));
             schedule1.setEndTime(LocalTime.of(10, 30));
-            schedule1.setPurpose("Computer Engineering as Discipline");
+            schedule1.setCourse(courses.get("Computer Engineering as Discipline"));
             schedule1.setStatus(Schedule.Status.APPROVED);
             scheduleRepository.save(schedule1);
 
-            // Computer lab session
             Schedule schedule2 = new Schedule();
             schedule2.setRoom(roomST111A);
             schedule2.setUser(faculty);
             schedule2.setDate(today);
             schedule2.setStartTime(LocalTime.of(13, 0));
             schedule2.setEndTime(LocalTime.of(14, 30));
-            schedule2.setPurpose("Living in I.T. Era");
+            schedule2.setCourse(courses.get("Living in I.T. Era"));
             schedule2.setStatus(Schedule.Status.APPROVED);
             scheduleRepository.save(schedule2);
 
-            // Tomorrow's meeting
             Schedule schedule3 = new Schedule();
             schedule3.setRoom(roomST411);
             schedule3.setUser(admin);
             schedule3.setDate(today.plusDays(1));
             schedule3.setStartTime(LocalTime.of(10, 0));
             schedule3.setEndTime(LocalTime.of(12, 0));
-            schedule3.setPurpose("Discrete Mathematics");
+            schedule3.setCourse(courses.get("Discrete Mathematics"));
             schedule3.setStatus(Schedule.Status.APPROVED);
             scheduleRepository.save(schedule3);
 
-            // Pending schedules
             Schedule schedule4 = new Schedule();
             schedule4.setRoom(roomST208);
             schedule4.setUser(faculty);
             schedule4.setDate(today.plusDays(2));
             schedule4.setStartTime(LocalTime.of(14, 0));
             schedule4.setEndTime(LocalTime.of(15, 30));
-            schedule4.setPurpose("Environmental Science and Engineering");
+            schedule4.setCourse(courses.get("Environmental Science and Engineering"));
             schedule4.setStatus(Schedule.Status.PENDING);
             scheduleRepository.save(schedule4);
 
-            // Next week schedules
             Schedule schedule5 = new Schedule();
             schedule5.setRoom(roomST101);
             schedule5.setUser(faculty);
             schedule5.setDate(today.plusDays(7));
             schedule5.setStartTime(LocalTime.of(10, 0));
             schedule5.setEndTime(LocalTime.of(11, 30));
-            schedule5.setPurpose("Numerical Methods");
+            schedule5.setCourse(courses.get("Numerical Methods"));
             schedule5.setStatus(Schedule.Status.APPROVED);
             scheduleRepository.save(schedule5);
         }
