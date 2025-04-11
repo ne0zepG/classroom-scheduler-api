@@ -2,7 +2,9 @@ package my.projects.classroomschedulerapp.service;
 
 import my.projects.classroomschedulerapp.dto.RoomDto;
 import my.projects.classroomschedulerapp.exception.ResourceNotFoundException;
+import my.projects.classroomschedulerapp.model.Building;
 import my.projects.classroomschedulerapp.model.Room;
+import my.projects.classroomschedulerapp.repository.BuildingRepository;
 import my.projects.classroomschedulerapp.repository.RoomRepository;
 import org.springframework.stereotype.Service;
 
@@ -15,9 +17,11 @@ import java.util.stream.Collectors;
 public class RoomService {
 
     private final RoomRepository roomRepository;
+    private final BuildingRepository buildingRepository;
 
-    public RoomService(RoomRepository roomRepository) {
+   public RoomService(RoomRepository roomRepository, BuildingRepository buildingRepository) {
         this.roomRepository = roomRepository;
+        this.buildingRepository = buildingRepository;
     }
 
     // Method to get all rooms
@@ -47,7 +51,12 @@ public class RoomService {
                 .orElseThrow(() -> new ResourceNotFoundException("Room not found with id: " + id));
         
         room.setRoomNumber(roomDto.getRoomNumber());
-        room.setBuilding(roomDto.getBuilding());
+        
+        // Get building by ID
+        Building building = buildingRepository.findById(roomDto.getBuildingId())
+                .orElseThrow(() -> new ResourceNotFoundException("Building not found with id: " + roomDto.getBuildingId()));
+        room.setBuilding(building);
+        
         room.setCapacity(roomDto.getCapacity());
         room.setHasProjector(roomDto.isHasProjector());
         room.setHasComputers(roomDto.isHasComputers());
@@ -75,7 +84,8 @@ public class RoomService {
         return new RoomDto(
                 room.getId(),
                 room.getRoomNumber(),
-                room.getBuilding(),
+                room.getBuilding().getId(),
+                room.getBuilding().getName(),
                 room.getCapacity(),
                 room.isHasProjector(),
                 room.isHasComputers()
@@ -85,7 +95,12 @@ public class RoomService {
     private Room convertToEntity(RoomDto roomDto) {
         Room room = new Room();
         room.setRoomNumber(roomDto.getRoomNumber());
-        room.setBuilding(roomDto.getBuilding());
+        
+        // Get building by ID
+        Building building = buildingRepository.findById(roomDto.getBuildingId())
+                .orElseThrow(() -> new ResourceNotFoundException("Building not found with id: " + roomDto.getBuildingId()));
+        room.setBuilding(building);
+        
         room.setCapacity(roomDto.getCapacity());
         room.setHasProjector(roomDto.isHasProjector());
         room.setHasComputers(roomDto.isHasComputers());
