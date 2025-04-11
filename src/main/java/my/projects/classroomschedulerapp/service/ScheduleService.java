@@ -150,6 +150,15 @@ public class ScheduleService {
                 .collect(Collectors.toList());
     }
 
+    public List<ScheduleDto> getSchedulesByEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
+
+        return scheduleRepository.findByUser(user).stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
     private boolean hasTimeConflict(Schedule existing, ScheduleDto requested) {
         // Check if time periods overlap
         return !((existing.getEndTime().isBefore(requested.getStartTime()) || 

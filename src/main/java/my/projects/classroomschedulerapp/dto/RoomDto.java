@@ -10,7 +10,8 @@ import lombok.NoArgsConstructor;
 public class RoomDto {
     private Long id;
     private String roomNumber;
-    private String building;
+    private Long buildingId;
+    private String buildingName;
     private int capacity;
     private boolean hasProjector;
     private boolean hasComputers;
