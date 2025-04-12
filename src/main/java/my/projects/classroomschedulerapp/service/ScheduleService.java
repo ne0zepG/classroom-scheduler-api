@@ -16,6 +16,7 @@ import my.projects.classroomschedulerapp.repository.ScheduleRepository;
 import my.projects.classroomschedulerapp.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,8 @@ import java.util.stream.Collectors;
 @Service
 public class ScheduleService {
 
+    private final ObjectProvider<ScheduleService> self;
+
     private static final Logger logger = LoggerFactory.getLogger(ScheduleService.class);
 
     private final ScheduleRepository scheduleRepository;
@@ -38,9 +41,11 @@ public class ScheduleService {
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
 
-    public ScheduleService(ScheduleRepository scheduleRepository,
+    public ScheduleService(ObjectProvider<ScheduleService> self,
+                           ScheduleRepository scheduleRepository,
                            RoomRepository roomRepository,
                            CourseRepository courseRepository, UserRepository userRepository) {
+        this.self = self;
         this.scheduleRepository = scheduleRepository;
         this.roomRepository = roomRepository;
         this.courseRepository = courseRepository;
@@ -51,7 +56,7 @@ public class ScheduleService {
     @Async("taskExecutor")
     public CompletableFuture<List<ScheduleDto>> getAllSchedulesAsync() {
         logger.debug("Asynchronously fetching all schedules");
-        List<ScheduleDto> schedules = getAllSchedules();
+        List<ScheduleDto> schedules = self.getObject().getAllSchedules();
         return CompletableFuture.completedFuture(schedules);
     }
 
@@ -59,21 +64,21 @@ public class ScheduleService {
     @Async("taskExecutor")
     public CompletableFuture<List<ScheduleDto>> getSchedulesByDateAsync(LocalDate date) {
         logger.debug("Asynchronously fetching schedules for date: {}", date);
-        List<ScheduleDto> schedules = getSchedulesByDate(date);
+        List<ScheduleDto> schedules = self.getObject().getSchedulesByDate(date);
         return CompletableFuture.completedFuture(schedules);
     }
 
     // Asynchronous method to get schedules by user ID
     @Async("taskExecutor")
     public CompletableFuture<List<ScheduleDto>> createRecurringScheduleAsync(RecurringScheduleRequestDto requestDto) {
-        List<ScheduleDto> schedules = createRecurringSchedule(requestDto);
+        List<ScheduleDto> schedules = self.getObject().createRecurringSchedule(requestDto);
         return CompletableFuture.completedFuture(schedules);
     }
 
     @Async("taskExecutor")
     public CompletableFuture<ScheduleDto> getScheduleByIdAsync(Long id) {
         logger.debug("Asynchronously fetching schedule with id: {}", id);
-        ScheduleDto schedule = getScheduleById(id);
+        ScheduleDto schedule = self.getObject().getScheduleById(id);
         return CompletableFuture.completedFuture(schedule);
     }
 
@@ -471,8 +476,8 @@ public class ScheduleService {
     // Thread-safe method for DTO conversion with caching user info
     private ScheduleDto convertToDto(Schedule schedule) {
         // Get user information with local caching to reduce database hits
-         String createdByName = getUserName(schedule.getCreatedByEmail());
-         String updatedByName = getUserName(schedule.getUpdatedByEmail());
+        String createdByName = self.getObject().getUserName(schedule.getCreatedByEmail());
+        String updatedByName = self.getObject().getUserName(schedule.getUpdatedByEmail());
 
         return new ScheduleDto(
                 schedule.getId(),

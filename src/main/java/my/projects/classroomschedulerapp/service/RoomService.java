@@ -8,6 +8,7 @@ import my.projects.classroomschedulerapp.repository.BuildingRepository;
 import my.projects.classroomschedulerapp.repository.RoomRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -22,22 +23,26 @@ import java.util.stream.Collectors;
 @Service
 public class RoomService {
 
+    private final ObjectProvider<RoomService> self;
+
     private static final Logger logger = LoggerFactory.getLogger(RoomService.class);
 
 
     private final RoomRepository roomRepository;
     private final BuildingRepository buildingRepository;
 
-   public RoomService(RoomRepository roomRepository, BuildingRepository buildingRepository) {
-        this.roomRepository = roomRepository;
-        this.buildingRepository = buildingRepository;
+   public RoomService(ObjectProvider<RoomService> self,
+                      RoomRepository roomRepository, BuildingRepository buildingRepository) {
+       this.self = self;
+       this.roomRepository = roomRepository;
+       this.buildingRepository = buildingRepository;
     }
 
     // Asynchronous method to get all rooms
     @Async("taskExecutor")
     public CompletableFuture<List<RoomDto>> getAllRoomsAsync() {
         logger.debug("Asynchronously fetching all rooms");
-        List<RoomDto> rooms = getAllRooms();
+        List<RoomDto> rooms = self.getObject().getAllRooms();
         return CompletableFuture.completedFuture(rooms);
     }
 
@@ -45,7 +50,7 @@ public class RoomService {
     @Async("taskExecutor")
     public CompletableFuture<List<RoomDto>> findAvailableRoomsAsync(LocalDate date, LocalTime startTime, LocalTime endTime) {
         logger.debug("Asynchronously finding available rooms for date: {}, time: {}-{}", date, startTime, endTime);
-        List<RoomDto> availableRooms = findAvailableRooms(date, startTime, endTime);
+        List<RoomDto> availableRooms = self.getObject().findAvailableRooms(date, startTime, endTime);
         return CompletableFuture.completedFuture(availableRooms);
     }
 
@@ -53,7 +58,7 @@ public class RoomService {
     @Async("taskExecutor")
     public CompletableFuture<RoomDto> getRoomByIdAsync(Long id) {
         logger.debug("Asynchronously fetching room with id: {}", id);
-        RoomDto room = getRoomById(id);
+        RoomDto room = self.getObject().getRoomById(id);
         return CompletableFuture.completedFuture(room);
     }
 
