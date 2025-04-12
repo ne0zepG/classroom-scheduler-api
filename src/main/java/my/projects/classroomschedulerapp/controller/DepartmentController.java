@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/api/departments")
@@ -26,14 +27,16 @@ public class DepartmentController {
 
     // This endpoint allows for retrieving all departments
     @GetMapping
-    public ResponseEntity<List<DepartmentDto>> getAllDepartments() {
-        return ResponseEntity.ok(departmentService.getAllDepartments());
+    public CompletableFuture<ResponseEntity<List<DepartmentDto>>> getAllDepartmentsAsync() {
+        return departmentService.getAllDepartmentsAsync()
+                .thenApply(ResponseEntity::ok);
     }
 
     // This endpoint allows for retrieving a department by its ID
     @GetMapping("/{id}")
-    public ResponseEntity<DepartmentDto> getDepartmentById(@PathVariable Long id) {
-        return ResponseEntity.ok(departmentService.getDepartmentById(id));
+    public CompletableFuture<ResponseEntity<DepartmentDto>> getDepartmentByIdAsync(@PathVariable Long id) {
+        return departmentService.getDepartmentByIdAsync(id)
+                .thenApply(ResponseEntity::ok);
     }
 
     // This endpoint allows for creating a new department
