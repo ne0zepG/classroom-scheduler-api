@@ -24,28 +24,28 @@ public class RoomService {
         this.buildingRepository = buildingRepository;
     }
 
-    // Method to get all rooms
+    // Get all rooms
     public List<RoomDto> getAllRooms() {
         return roomRepository.findAll().stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
-    // Method to get a room by ID
+    // Get room by ID
     public RoomDto getRoomById(Long id) {
         Room room = roomRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Room not found with id: " + id));
         return convertToDto(room);
     }
 
-    // Method to create a new room
+    // Create a new room
     public RoomDto createRoom(RoomDto roomDto) {
         Room room = convertToEntity(roomDto);
         Room savedRoom = roomRepository.save(room);
         return convertToDto(savedRoom);
     }
 
-    // Method to update an existing room
+    // Update an existing room
     public RoomDto updateRoom(Long id, RoomDto roomDto) {
         Room room = roomRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Room not found with id: " + id));
@@ -65,7 +65,7 @@ public class RoomService {
         return convertToDto(updatedRoom);
     }
 
-    // Method to delete a room by ID
+    // Delete a room
     public void deleteRoom(Long id) {
         if (!roomRepository.existsById(id)) {
             throw new ResourceNotFoundException("Room not found with id: " + id);
@@ -73,13 +73,14 @@ public class RoomService {
         roomRepository.deleteById(id);
     }
 
-    // Method to find available rooms based on date and time
+    // Find available rooms for a given date and time
     public List<RoomDto> findAvailableRooms(LocalDate date, LocalTime startTime, LocalTime endTime) {
         return roomRepository.findAvailableRooms(date, startTime, endTime).stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
+    // Convert Room entity to DTO
     private RoomDto convertToDto(Room room) {
         return new RoomDto(
                 room.getId(),
@@ -92,6 +93,7 @@ public class RoomService {
         );
     }
 
+    // Convert Room DTO to entity
     private Room convertToEntity(RoomDto roomDto) {
         Room room = new Room();
         room.setRoomNumber(roomDto.getRoomNumber());
