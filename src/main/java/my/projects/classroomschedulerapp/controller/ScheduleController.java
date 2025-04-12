@@ -38,10 +38,11 @@ public class ScheduleController {
         this.userRepository = userRepository;
     }
 
-    // This endpoint allows for retrieving all schedules
+    // This endpoint allows for retrieving all schedules asynchronously
     @GetMapping
-    public ResponseEntity<List<ScheduleDto>> getAllSchedules() {
-        return ResponseEntity.ok(scheduleService.getAllSchedules());
+    public CompletableFuture<ResponseEntity<List<ScheduleDto>>> getAllSchedulesAsync() {
+        return scheduleService.getAllSchedulesAsync()
+                .thenApply(ResponseEntity::ok);
     }
 
     // This endpoint allows for retrieving a schedule by its ID asynchronously
@@ -53,9 +54,8 @@ public class ScheduleController {
 
     // This endpoint allows for creating a new schedule
     @PostMapping
-    public CompletableFuture<ResponseEntity<List<ScheduleDto>>> getAllSchedulesAsync() {
-        return scheduleService.getAllSchedulesAsync()
-                .thenApply(ResponseEntity::ok);
+    public ResponseEntity<ScheduleDto> createSchedule(@RequestBody ScheduleDto scheduleDto) {
+        return new ResponseEntity<>(scheduleService.createSchedule(scheduleDto), HttpStatus.CREATED);
     }
 
     // This endpoint allows for updating an existing schedule
@@ -95,6 +95,7 @@ public class ScheduleController {
         return ResponseEntity.ok(scheduleService.getSchedulesByUser(userId));
     }
 
+    // This endpoint allows for filtering schedules by email
     @GetMapping("/email/{email}")
     public ResponseEntity<List<ScheduleDto>> getSchedulesByEmail(@PathVariable String email) {
         List<ScheduleDto> schedules = scheduleService.getSchedulesByEmail(email);
