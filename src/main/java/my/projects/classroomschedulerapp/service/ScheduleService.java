@@ -16,12 +16,16 @@ import my.projects.classroomschedulerapp.repository.ScheduleRepository;
 import my.projects.classroomschedulerapp.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
@@ -43,10 +47,27 @@ public class ScheduleService {
         this.userRepository = userRepository;
     }
 
+    // Asynchronous method to get schedules by date
+    @Async("taskExecutor")
+    public CompletableFuture<List<ScheduleDto>> getSchedulesByDateAsync(LocalDate date) {
+        logger.debug("Asynchronously fetching schedules for date: {}", date);
+        List<ScheduleDto> schedules = getSchedulesByDate(date);
+        return CompletableFuture.completedFuture(schedules);
+    }
+
+    // Asynchronous method to get schedules by user ID
+    @Async("taskExecutor")
+    public CompletableFuture<List<ScheduleDto>> createRecurringScheduleAsync(RecurringScheduleRequestDto requestDto) {
+        List<ScheduleDto> schedules = createRecurringSchedule(requestDto);
+        return CompletableFuture.completedFuture(schedules);
+    }
+
     // Get all schedules
+    @Transactional(readOnly = true)
     public List<ScheduleDto> getAllSchedules() {
         logger.debug("Fetching all schedules");
-        List<ScheduleDto> schedules = scheduleRepository.findAll().stream()
+        List<ScheduleDto> schedules = scheduleRepository.findAll()
+                .parallelStream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
         logger.debug("Found {} schedules", schedules.size());
@@ -54,6 +75,8 @@ public class ScheduleService {
     }
 
     // Get schedule by ID
+    @Transactional
+    @Cacheable(value = "scheduleDetails", key = "#id")
     public ScheduleDto getScheduleById(Long id) {
         logger.debug("Fetching schedule with id: {}", id);
         Schedule schedule = scheduleRepository.findById(id)
@@ -63,6 +86,7 @@ public class ScheduleService {
     }
 
     // Create a new schedule
+    @Transactional
     public ScheduleDto createSchedule(ScheduleDto scheduleDto) {
         logger.debug("Creating new schedule for room: {}, date: {}, time: {}-{}",
                 scheduleDto.getRoomId(), scheduleDto.getDate(),
@@ -95,6 +119,7 @@ public class ScheduleService {
     }
 
     // Update schedule
+    @Transactional
     public ScheduleDto updateSchedule(Long id, ScheduleDto scheduleDto) {
         logger.debug("Updating schedule with id: {}", id);
 
@@ -144,6 +169,7 @@ public class ScheduleService {
     }
 
     // Delete schedule
+    @Transactional
     public void deleteSchedule(Long id) {
         logger.debug("Deleting schedule with id: {}", id);
         if (!scheduleRepository.existsById(id)) {
@@ -155,17 +181,20 @@ public class ScheduleService {
     }
 
     // Get schedules by date
+    @Transactional(readOnly = true)
+    @Cacheable(value = "schedulesByDate", key = "#date.toString()")
     public List<ScheduleDto> getSchedulesByDate(LocalDate date) {
         logger.debug("Fetching schedules for date: {}", date);
         List<Schedule> schedules = scheduleRepository.findAllSchedulesForDate(date);
-        List<ScheduleDto> scheduleDtoByDate = schedules.stream()
+        List<ScheduleDto> scheduleDtoByDate = schedules.parallelStream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
-        logger.debug("Found {} schedules for date: {}", scheduleDtoByDate.size(), date);
+        logger.debug("Found {} schedules for date: {}", scheduleDtoByDate.size());
         return scheduleDtoByDate;
     }
 
     // Get schedules by user ID
+    @Transactional(readOnly = true)
     public List<ScheduleDto> getSchedulesByUser(Long userId) {
         logger.debug("Fetching schedules for user id: {}", userId);
         User user = userRepository.findById(userId)
@@ -174,7 +203,7 @@ public class ScheduleService {
                     return new ResourceNotFoundException("User not found with id: " + userId);
                 });
 
-        List<ScheduleDto> scheduleDtoByUser = scheduleRepository.findByUser(user).stream()
+        List<ScheduleDto> scheduleDtoByUser = scheduleRepository.findByUser(user).parallelStream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
         logger.debug("Found {} schedules for user id: {}", scheduleDtoByUser.size(), userId);
@@ -182,6 +211,7 @@ public class ScheduleService {
     }
 
     // Get schedules by user email
+    @Transactional(readOnly = true)
     public List<ScheduleDto> getSchedulesByEmail(String email) {
         logger.debug("Fetching schedules for user email: {}", email);
         User user = userRepository.findByEmail(email)
@@ -190,7 +220,7 @@ public class ScheduleService {
                     return new ResourceNotFoundException("User not found with email: " + email);
                 });
 
-        List<ScheduleDto> scheduleDtoByEmail = scheduleRepository.findByUser(user).stream()
+        List<ScheduleDto> scheduleDtoByEmail = scheduleRepository.findByUser(user).parallelStream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
         logger.debug("Found {} schedules for user email: {}", scheduleDtoByEmail.size(), email);
@@ -198,14 +228,14 @@ public class ScheduleService {
     }
 
     // Create a recurring schedule based on a pattern
+    @Transactional
     public List<ScheduleDto> createRecurringSchedule(RecurringScheduleRequestDto requestDto) {
-        logger.info("Creating recurring schedule with pattern starting {} and ending {}",
-                requestDto.getRecurrencePattern().getStartDate(),
-                requestDto.getRecurrencePattern().getEndDate());
-
-        // Get recurrence pattern
+        // Get recurrence pattern and base schedule
         RecurrencePatternDto pattern = requestDto.getRecurrencePattern();
         BaseScheduleDto baseSchedule = requestDto.getBaseSchedule();
+
+        logger.info("Creating recurring schedule with pattern starting {} and ending {}",
+                pattern.getStartDate(), pattern.getEndDate());
 
         logger.debug("Processing recurring schedule for room: {}, course: {}, user: {}",
                 baseSchedule.getRoomId(), baseSchedule.getCourseId(), baseSchedule.getUserId());
@@ -231,26 +261,15 @@ public class ScheduleService {
                     return new ResourceNotFoundException("Course not found with id: " + baseSchedule.getCourseId());
                 });
 
-        // Generate all dates in the pattern
+        // Generate all dates in the pattern - using pattern variable
         List<LocalDate> scheduleDates = generateDatesByPattern(pattern);
         logger.debug("Generated {} dates for recurring schedule", scheduleDates.size());
 
         // Check for conflicts on all dates
-        logger.debug("Checking for conflicts on all generated dates");
-        for (LocalDate date : scheduleDates) {
-            List<Schedule> conflictingSchedules = scheduleRepository.findByRoomAndDate(room, date);
-            for (Schedule existingSchedule : conflictingSchedules) {
-                if (hasTimeConflict(existingSchedule, baseSchedule.getStartTime(), baseSchedule.getEndTime())) {
-                    logger.warn("Schedule conflict detected for date: {} with existing schedule id: {}",
-                            date, existingSchedule.getId());
-                    throw new ScheduleConflictException("The room has already a schedule during the requested time on " + date);
-                }
-            }
-        }
+        checkForConflictsInParallel(room, scheduleDates, baseSchedule.getStartTime(), baseSchedule.getEndTime());
 
-        // Create schedules for all dates
-        logger.debug("Creating schedules for {} dates", scheduleDates.size());
-        List<Schedule> createdSchedules = new ArrayList<>();
+        // Create schedules for all dates - batch insert
+        List<Schedule> schedulesToCreate = new ArrayList<>();
 
         for (LocalDate date : scheduleDates) {
             Schedule schedule = new Schedule();
@@ -261,17 +280,17 @@ public class ScheduleService {
             schedule.setEndTime(baseSchedule.getEndTime());
             schedule.setCourse(course);
             schedule.setStatus(Schedule.Status.PENDING);
-
-            // Audit information
             schedule.setCreatedByEmail(user.getEmail());
             schedule.setUpdatedByEmail(user.getEmail());
 
-            createdSchedules.add(scheduleRepository.save(schedule));
+            schedulesToCreate.add(schedule);
         }
 
-        logger.info("Successfully created {} recurring schedules", createdSchedules.size());
-        // Convert to DTOs and return
-        return createdSchedules.stream()
+        // Batch save all schedules at once
+        List<Schedule> createdSchedules = scheduleRepository.saveAll(schedulesToCreate);
+
+        // Convert to DTOs in parallel
+        return createdSchedules.parallelStream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
@@ -297,6 +316,7 @@ public class ScheduleService {
     }
 
     // Update schedule status
+    @Transactional
     public ScheduleDto updateScheduleStatus(Long id, Schedule.Status status) {
         logger.debug("Updating schedule status with id: {}", id);
         Schedule schedule = scheduleRepository.findById(id)
@@ -309,6 +329,7 @@ public class ScheduleService {
     }
 
     // Batch update status for multiple schedules
+    @Transactional
     public List<ScheduleDto> updateScheduleStatusBatch(List<Long> ids, Schedule.Status status, User currentUser) {
         logger.info("Batch updating status to {} for {} schedules", status, ids.size());
 
@@ -321,24 +342,25 @@ public class ScheduleService {
                     ids.size(), schedules.size());
         }
 
-        // Update status for all found schedules
-        logger.debug("Updating status for {} found schedules", schedules.size());
-        for (Schedule schedule : schedules) {
+        // Copy schedules to avoid concurrent modification issues
+        List<Schedule> schedulesToUpdate = new ArrayList<>(schedules);
+        schedulesToUpdate.parallelStream().forEach(schedule -> {
             schedule.setStatus(status);
             schedule.setUpdatedByEmail(currentUser.getEmail());
-        }
+        });
 
         // Save all at once (this uses a single transaction)
-        List<Schedule> updatedSchedules = scheduleRepository.saveAll(schedules);
+        List<Schedule> updatedSchedules = scheduleRepository.saveAll(schedulesToUpdate);
         logger.info("Successfully updated status for {} schedules", updatedSchedules.size());
 
         // Convert to DTOs and return
-        return updatedSchedules.stream()
+        return updatedSchedules.parallelStream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
     // Batch delete schedules
+    @Transactional
     public void deleteSchedulesBatch(List<Long> ids) {
         logger.debug("Deleting schedules batch with ids: {}", ids);
         // Find all schedules with the given IDs
@@ -393,6 +415,25 @@ public class ScheduleService {
         }
     }
 
+    // Check for conflicts in parallel
+    private void checkForConflictsInParallel(Room room, List<LocalDate> dates,
+                                             LocalTime startTime, LocalTime endTime) {
+        List<String> conflictingDates = dates.parallelStream()
+                .filter(date -> {
+                    List<Schedule> existingSchedules = scheduleRepository.findByRoomAndDate(room, date);
+                    return existingSchedules.stream()
+                            .anyMatch(existing -> hasTimeConflict(existing, startTime, endTime));
+                })
+                .map(LocalDate::toString)
+                .collect(Collectors.toList());
+
+        if (!conflictingDates.isEmpty()) {
+            String errorMessage = "The room has already a schedule during the requested time on dates: "
+                    + String.join(", ", conflictingDates);
+            throw new ScheduleConflictException(errorMessage);
+        }
+    }
+
     // Helper method to populate schedule from DTO
     private void populateScheduleFromDto(Schedule schedule, Room room, Course course, User user, ScheduleDto scheduleDto) {
         schedule.setRoom(room);
@@ -412,24 +453,11 @@ public class ScheduleService {
     }
 
     // Convert Schedule entity to ScheduleDto
+    // Thread-safe method for DTO conversion with caching user info
     private ScheduleDto convertToDto(Schedule schedule) {
-        // TODO: Replace with actual user name retrieval
-        String createdByName = "admin@college.edu";
-        String updatedByName = "admin@college.edu";
-
-        if (schedule.getCreatedByEmail() != null) {
-            User createdBy = userRepository.findByEmail(schedule.getCreatedByEmail()).orElse(null);
-            if (createdBy != null) {
-                createdByName = createdBy.getName();
-            }
-        }
-
-        if (schedule.getUpdatedByEmail() != null) {
-            User updatedBy = userRepository.findByEmail(schedule.getUpdatedByEmail()).orElse(null);
-            if (updatedBy != null) {
-                updatedByName = updatedBy.getName();
-            }
-        }
+        // Get user information with local caching to reduce database hits
+         String createdByName = getUserName(schedule.getCreatedByEmail());
+         String updatedByName = getUserName(schedule.getUpdatedByEmail());
 
         return new ScheduleDto(
                 schedule.getId(),
@@ -451,6 +479,15 @@ public class ScheduleService {
                 schedule.getUpdatedByEmail(),
                 updatedByName
         );
+    }
+
+    // Get username by email with caching
+    @Cacheable(value = "userDetails", key = "#email")
+    public String getUserName(String email) {
+        if (email == null) return null;
+
+        User user = userRepository.findByEmail(email).orElse(null);
+        return user != null ? user.getName() : email;
     }
     
 }
