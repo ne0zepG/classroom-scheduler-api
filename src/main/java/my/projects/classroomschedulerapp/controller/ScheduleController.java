@@ -46,8 +46,9 @@ public class ScheduleController {
 
     // This endpoint allows for retrieving a schedule by its ID
     @GetMapping("/{id}")
-    public ResponseEntity<ScheduleDto> getScheduleById(@PathVariable Long id) {
-        return ResponseEntity.ok(scheduleService.getScheduleById(id));
+    public CompletableFuture<ResponseEntity<ScheduleDto>> getScheduleByIdAsync(@PathVariable Long id) {
+        return scheduleService.getScheduleByIdAsync(id)
+                .thenApply(ResponseEntity::ok);
     }
 
     // This endpoint allows for creating a new schedule

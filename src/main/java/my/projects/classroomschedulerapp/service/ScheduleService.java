@@ -62,6 +62,13 @@ public class ScheduleService {
         return CompletableFuture.completedFuture(schedules);
     }
 
+    @Async("taskExecutor")
+    public CompletableFuture<ScheduleDto> getScheduleByIdAsync(Long id) {
+        logger.debug("Asynchronously fetching schedule with id: {}", id);
+        ScheduleDto schedule = getScheduleById(id);
+        return CompletableFuture.completedFuture(schedule);
+    }
+
     // Get all schedules
     @Transactional(readOnly = true)
     public List<ScheduleDto> getAllSchedules() {
