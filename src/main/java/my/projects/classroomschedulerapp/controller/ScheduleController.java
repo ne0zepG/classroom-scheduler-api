@@ -53,8 +53,9 @@ public class ScheduleController {
 
     // This endpoint allows for creating a new schedule
     @PostMapping
-    public ResponseEntity<ScheduleDto> createSchedule(@RequestBody ScheduleDto scheduleDto) {
-        return new ResponseEntity<>(scheduleService.createSchedule(scheduleDto), HttpStatus.CREATED);
+    public CompletableFuture<ResponseEntity<List<ScheduleDto>>> getAllSchedulesAsync() {
+        return scheduleService.getAllSchedulesAsync()
+                .thenApply(ResponseEntity::ok);
     }
 
     // This endpoint allows for updating an existing schedule

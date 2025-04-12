@@ -47,6 +47,14 @@ public class ScheduleService {
         this.userRepository = userRepository;
     }
 
+    // Asynchronous method to get all schedules
+    @Async("taskExecutor")
+    public CompletableFuture<List<ScheduleDto>> getAllSchedulesAsync() {
+        logger.debug("Asynchronously fetching all schedules");
+        List<ScheduleDto> schedules = getAllSchedules();
+        return CompletableFuture.completedFuture(schedules);
+    }
+
     // Asynchronous method to get schedules by date
     @Async("taskExecutor")
     public CompletableFuture<List<ScheduleDto>> getSchedulesByDateAsync(LocalDate date) {
