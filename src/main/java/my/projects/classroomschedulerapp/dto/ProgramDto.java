@@ -1,6 +1,5 @@
 package my.projects.classroomschedulerapp.dto;
 
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,10 +7,10 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CourseDto {
+public class ProgramDto {
     private Long id;
-    private String courseCode;
-    private String description;
-    private Long programId;
-    private String programName;
+    private String name;
+    private String code;
+    private Long departmentId;
+    private String departmentName;
 }

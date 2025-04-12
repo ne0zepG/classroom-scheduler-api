@@ -29,6 +29,6 @@ public class Course {
     private String description;
 
     @ManyToOne
-    @JoinColumn(name = "department_id", nullable = false)
-    private Department department;
+    @JoinColumn(name = "program_id", nullable = false)
+    private Program program;
 }

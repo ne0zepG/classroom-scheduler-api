@@ -4,12 +4,14 @@ import my.projects.classroomschedulerapp.model.Course;
 import my.projects.classroomschedulerapp.model.Schedule;
 import my.projects.classroomschedulerapp.model.Building;
 import my.projects.classroomschedulerapp.model.Department;
+import my.projects.classroomschedulerapp.model.Program;
 import my.projects.classroomschedulerapp.model.Room;
 import my.projects.classroomschedulerapp.model.User;
 import my.projects.classroomschedulerapp.repository.CourseRepository;
 import my.projects.classroomschedulerapp.repository.ScheduleRepository;
 import my.projects.classroomschedulerapp.repository.BuildingRepository;
 import my.projects.classroomschedulerapp.repository.DepartmentRepository;
+import my.projects.classroomschedulerapp.repository.ProgramRepository;
 import my.projects.classroomschedulerapp.repository.RoomRepository;
 import my.projects.classroomschedulerapp.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
@@ -29,18 +31,21 @@ public class DataInitializer implements CommandLineRunner {
     private final RoomRepository roomRepository;
     private final UserRepository userRepository;
     private final DepartmentRepository departmentRepository;
+    private final ProgramRepository programRepository;
     private final CourseRepository courseRepository;
     private final PasswordEncoder passwordEncoder;
 
     public DataInitializer(ScheduleRepository scheduleRepository, BuildingRepository buildingRepository,
                            RoomRepository roomRepository,
                            DepartmentRepository departmentRepository,
+                            ProgramRepository programRepository,
                            CourseRepository courseRepository,
                            UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.scheduleRepository = scheduleRepository;
         this.buildingRepository = buildingRepository;
         this.roomRepository = roomRepository;
         this.departmentRepository = departmentRepository;
+        this.programRepository = programRepository;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
@@ -164,41 +169,93 @@ public class DataInitializer implements CommandLineRunner {
                     departments.put(department.getName(), department));
         }
 
+        // Create programs if they don't exist
+        Map<String, Program> programs = new HashMap<>();
+        if (programRepository.count() == 0) {
+            // Engineering programs
+            Program civilEngProgram = new Program();
+            civilEngProgram.setName("Bachelor of Science in Civil Engineering");
+            civilEngProgram.setCode("BSCE");
+            civilEngProgram.setDepartment(departments.get("College of Engineering"));
+            programRepository.save(civilEngProgram);
+            programs.put("BSCE", civilEngProgram);
+
+            Program compEngProgram = new Program();
+            compEngProgram.setName("Bachelor of Science in Computer Engineering");
+            compEngProgram.setCode("BSCpE");
+            compEngProgram.setDepartment(departments.get("College of Engineering"));
+            programRepository.save(compEngProgram);
+            programs.put("BSCpE", compEngProgram);
+
+            Program geodeticProgram = new Program();
+            geodeticProgram.setName("Bachelor of Science in Geodetic Engineering");
+            geodeticProgram.setCode("BSGE");
+            geodeticProgram.setDepartment(departments.get("College of Engineering"));
+            programRepository.save(geodeticProgram);
+            programs.put("BSGE", geodeticProgram);
+
+            // Science programs
+            Program mathProgram = new Program();
+            mathProgram.setName("Bachelor of Science in Mathematics");
+            mathProgram.setCode("BSM");
+            mathProgram.setDepartment(departments.get("College of Science"));
+            programRepository.save(mathProgram);
+            programs.put("BSM", mathProgram);
+
+            Program physicsProgram = new Program();
+            physicsProgram.setName("Bachelor of Science in Physics");
+            physicsProgram.setCode("BSP");
+            physicsProgram.setDepartment(departments.get("College of Science"));
+            programRepository.save(physicsProgram);
+            programs.put("BSP", physicsProgram);
+
+            // Humanities programs
+            Program literatureProgram = new Program();
+            literatureProgram.setName("Bachelor of Arts in Literature");
+            literatureProgram.setCode("BAL");
+            literatureProgram.setDepartment(departments.get("College of Humanities"));
+            programRepository.save(literatureProgram);
+            programs.put("BAL", literatureProgram);
+        } else {
+            programRepository.findAll().forEach(program ->
+                    programs.put(program.getCode(), program));
+        }
+
         // Create courses if they don't exist
         Map<String, Course> courses = new HashMap<>();
         if (courseRepository.count() == 0) {
             Course compEngCourse = new Course();
             compEngCourse.setCourseCode("CPE111");
             compEngCourse.setDescription("Computer Engineering as Discipline");
-            compEngCourse.setDepartment(departments.get("College of Engineering"));
+            compEngCourse.setProgram(programs.get("BSCpE"));
             courseRepository.save(compEngCourse);
             courses.put("Computer Engineering as Discipline", compEngCourse);
 
             Course itCourse = new Course();
             itCourse.setCourseCode("GEC9");
             itCourse.setDescription("Living in I.T. Era");
-            itCourse.setDepartment(departments.get("College of Engineering"));
+            itCourse.setProgram(programs.get("BSCpE"));
             courseRepository.save(itCourse);
             courses.put("Living in I.T. Era", itCourse);
 
             Course mathCourse = new Course();
             mathCourse.setCourseCode("CPE121");
             mathCourse.setDescription("Discrete Mathematics");
-            mathCourse.setDepartment(departments.get("College of Science"));
+            mathCourse.setProgram(programs.get("BSM"));
             courseRepository.save(mathCourse);
             courses.put("Discrete Mathematics", mathCourse);
 
             Course envCourse = new Course();
             envCourse.setCourseCode("CPE417");
             envCourse.setDescription("Environmental Science and Engineering");
-            envCourse.setDepartment(departments.get("College of Science"));
+            envCourse.setProgram(programs.get("BSCE"));
             courseRepository.save(envCourse);
             courses.put("Environmental Science and Engineering", envCourse);
 
             Course numMethods = new Course();
             numMethods.setCourseCode("CPE223");
             numMethods.setDescription("Numerical Methods");
-            numMethods.setDepartment(departments.get("College of Science"));
+            numMethods.setProgram(programs.get("BSM"));
             courseRepository.save(numMethods);
             courses.put("Numerical Methods", numMethods);
         } else {

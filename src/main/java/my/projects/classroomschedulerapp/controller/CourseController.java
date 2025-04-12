@@ -36,10 +36,10 @@ public class CourseController {
         return ResponseEntity.ok(courseService.getCourseById(id));
     }
 
-    // This endpoint allows for retrieving courses by department ID
-    @GetMapping("/department/{departmentId}")
-    public ResponseEntity<List<CourseDto>> getCoursesByDepartment(@PathVariable Long departmentId) {
-        return ResponseEntity.ok(courseService.getCoursesByDepartment(departmentId));
+    // This endpoint for getting courses by program ID
+    @GetMapping("/program/{programId}")
+    public ResponseEntity<List<CourseDto>> getCoursesByProgram(@PathVariable Long programId) {
+        return ResponseEntity.ok(courseService.getCoursesByProgram(programId));
     }
 
     // This endpoint allows for creating a new course
