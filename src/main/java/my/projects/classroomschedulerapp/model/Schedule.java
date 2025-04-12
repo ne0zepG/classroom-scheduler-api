@@ -13,8 +13,11 @@ import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 @Entity
@@ -50,6 +53,21 @@ public class Schedule {
     
     @Enumerated(EnumType.STRING)
     private Status status;
+
+    @CreationTimestamp
+    @Column(name = "creation_date", nullable = false, updatable = false)
+    private LocalDateTime creationDate;
+
+    @UpdateTimestamp
+    @Column(name = "last_updated")
+    private LocalDateTime lastUpdated;
+
+    @Column(name = "created_by_email")
+    private String createdByEmail;
+
+    @Column(name = "updated_by_email")
+    private String updatedByEmail;
+    
     
     public enum Status {
         PENDING, APPROVED, REJECTED

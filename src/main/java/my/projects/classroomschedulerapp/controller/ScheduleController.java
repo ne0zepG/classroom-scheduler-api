@@ -3,7 +3,10 @@ package my.projects.classroomschedulerapp.controller;
 import my.projects.classroomschedulerapp.dto.BatchStatusUpdateRequestDto;
 import my.projects.classroomschedulerapp.dto.RecurringScheduleRequestDto;
 import my.projects.classroomschedulerapp.dto.ScheduleDto;
+import my.projects.classroomschedulerapp.exception.ResourceNotFoundException;
 import my.projects.classroomschedulerapp.model.Schedule;
+import my.projects.classroomschedulerapp.model.User;
+import my.projects.classroomschedulerapp.repository.UserRepository;
 import my.projects.classroomschedulerapp.service.ScheduleService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -27,9 +30,11 @@ import java.util.List;
 public class ScheduleController {
 
     private final ScheduleService scheduleService;
+    private final UserRepository userRepository;
 
-    public ScheduleController(ScheduleService scheduleService) {
+    public ScheduleController(ScheduleService scheduleService, UserRepository userRepository) {
         this.scheduleService = scheduleService;
+        this.userRepository = userRepository;
     }
 
     // This endpoint allows for retrieving all schedules
@@ -103,8 +108,12 @@ public class ScheduleController {
     @PatchMapping("/batch/status")
     public ResponseEntity<List<ScheduleDto>> updateScheduleStatusBatch(
             @RequestBody BatchStatusUpdateRequestDto request) {
+        // TODO: Implement authentication and authorization checks
+        User currentUser = userRepository.findByEmail("admin@college.edu")
+                .orElseThrow(() -> new ResourceNotFoundException("Admin user not found"));
+
         List<ScheduleDto> updatedSchedules = scheduleService.updateScheduleStatusBatch(
-                request.getIds(), request.getStatus());
+                request.getIds(), request.getStatus(), currentUser);
         return ResponseEntity.ok(updatedSchedules);
     }
 
