@@ -3,9 +3,9 @@ package my.projects.classroomschedulerapp.service;
 import my.projects.classroomschedulerapp.dto.CourseDto;
 import my.projects.classroomschedulerapp.exception.ResourceNotFoundException;
 import my.projects.classroomschedulerapp.model.Course;
-import my.projects.classroomschedulerapp.model.Department;
+import my.projects.classroomschedulerapp.model.Program;
 import my.projects.classroomschedulerapp.repository.CourseRepository;
-import my.projects.classroomschedulerapp.repository.DepartmentRepository;
+import my.projects.classroomschedulerapp.repository.ProgramRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,12 +13,14 @@ import java.util.stream.Collectors;
 
 @Service
 public class CourseService {
-    private final CourseRepository courseRepository;
-    private final DepartmentRepository departmentRepository;
 
-    public CourseService(CourseRepository courseRepository, DepartmentRepository departmentRepository) {
+    private final CourseRepository courseRepository;
+    private final ProgramRepository programRepository;
+
+
+    public CourseService(CourseRepository courseRepository, ProgramRepository departmentRepository) {
         this.courseRepository = courseRepository;
-        this.departmentRepository = departmentRepository;
+        this.programRepository = departmentRepository;
     }
 
     // Get all courses
@@ -35,13 +37,12 @@ public class CourseService {
         return convertToDto(course);
     }
 
-    // Get courses by department ID
-    public List<CourseDto> getCoursesByDepartment(Long departmentId) {
-        // Verify department exists
-        if (!departmentRepository.existsById(departmentId)) {
-            throw new ResourceNotFoundException("Department not found with id: " + departmentId);
+    // Get courses by program ID
+    public List<CourseDto> getCoursesByProgram(Long programId) {
+        if (!programRepository.existsById(programId)) {
+            throw new ResourceNotFoundException("Program not found with id: " + programId);
         }
-        return courseRepository.findByDepartmentId(departmentId).stream()
+        return courseRepository.findByProgramId(programId).stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
@@ -58,15 +59,14 @@ public class CourseService {
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + id));
 
-        // Update course fields
         course.setCourseCode(courseDto.getCourseCode());
         course.setDescription(courseDto.getDescription());
 
-        // Update department if provided
-        if (courseDto.getDepartmentId() != null) {
-            Department department = departmentRepository.findById(courseDto.getDepartmentId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Department not found with id: " + courseDto.getDepartmentId()));
-            course.setDepartment(department);
+        // Update program if provided
+        if (courseDto.getProgramId() != null) {
+            Program program = programRepository.findById(courseDto.getProgramId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Program not found with id: " + courseDto.getProgramId()));
+            course.setProgram(program);
         }
 
         Course updatedCourse = courseRepository.save(course);
@@ -87,8 +87,8 @@ public class CourseService {
                 course.getId(),
                 course.getCourseCode(),
                 course.getDescription(),
-                course.getDepartment().getId(),
-                course.getDepartment().getName()
+                course.getProgram().getId(),
+                course.getProgram().getName()
         );
     }
 
@@ -98,10 +98,10 @@ public class CourseService {
         course.setCourseCode(courseDto.getCourseCode());
         course.setDescription(courseDto.getDescription());
 
-        // Set department
-        Department department = departmentRepository.findById(courseDto.getDepartmentId())
-                .orElseThrow(() -> new ResourceNotFoundException("Department not found with id: " + courseDto.getDepartmentId()));
-        course.setDepartment(department);
+        // Set program
+        Program program = programRepository.findById(courseDto.getProgramId())
+                .orElseThrow(() -> new ResourceNotFoundException("Program not found with id: " + courseDto.getProgramId()));
+        course.setProgram(program);
 
         return course;
     }
