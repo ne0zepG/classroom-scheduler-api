@@ -1,7 +1,7 @@
 package my.projects.classroomschedulerapp.repository;
 
-import my.projects.classroomschedulerapp.model.Schedule;
 import my.projects.classroomschedulerapp.model.Room;
+import my.projects.classroomschedulerapp.model.Schedule;
 import my.projects.classroomschedulerapp.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
