@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/api/courses")
@@ -24,22 +25,25 @@ public class CourseController {
         this.courseService = courseService;
     }
 
-    // This endpoint allows for retrieving all courses
+    // This endpoint allows for retrieving all courses asynchronously
     @GetMapping
-    public ResponseEntity<List<CourseDto>> getAllCourses() {
-        return ResponseEntity.ok(courseService.getAllCourses());
+    public CompletableFuture<ResponseEntity<List<CourseDto>>> getAllCoursesAsync() {
+        return courseService.getAllCoursesAsync()
+                .thenApply(ResponseEntity::ok);
     }
 
-    // This endpoint allows for retrieving a course by its ID
+    // This endpoint allows for retrieving a course by its ID asynchronously
     @GetMapping("/{id}")
-    public ResponseEntity<CourseDto> getCourseById(@PathVariable Long id) {
-        return ResponseEntity.ok(courseService.getCourseById(id));
+    public CompletableFuture<ResponseEntity<CourseDto>> getCourseByIdAsync(@PathVariable Long id) {
+        return courseService.getCourseByIdAsync(id)
+                .thenApply(ResponseEntity::ok);
     }
 
-    // This endpoint for getting courses by program ID
+    // This endpoint for getting courses by program ID asynchronously
     @GetMapping("/program/{programId}")
-    public ResponseEntity<List<CourseDto>> getCoursesByProgram(@PathVariable Long programId) {
-        return ResponseEntity.ok(courseService.getCoursesByProgram(programId));
+    public CompletableFuture<ResponseEntity<List<CourseDto>>> getCoursesByProgramAsync(@PathVariable Long programId) {
+        return courseService.getCoursesByProgramAsync(programId)
+                .thenApply(ResponseEntity::ok);
     }
 
     // This endpoint allows for creating a new course

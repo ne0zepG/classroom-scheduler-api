@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/api/rooms")
@@ -29,16 +30,18 @@ public class RoomController {
         this.roomService = roomService;
     }
 
-    // This endpoint allows for retrieving all rooms
+    // This endpoint allows for retrieving all rooms asynchronously
     @GetMapping
-    public ResponseEntity<List<RoomDto>> getAllRooms() {
-        return ResponseEntity.ok(roomService.getAllRooms());
+    public CompletableFuture<ResponseEntity<List<RoomDto>>> getAllRoomsAsync() {
+        return roomService.getAllRoomsAsync()
+                .thenApply(ResponseEntity::ok);
     }
 
-    // This endpoint allows for retrieving a room by its ID
+    // This endpoint allows for retrieving a room by its ID asynchronously
     @GetMapping("/{id}")
-    public ResponseEntity<RoomDto> getRoomById(@PathVariable Long id) {
-        return ResponseEntity.ok(roomService.getRoomById(id));
+    public CompletableFuture<ResponseEntity<RoomDto>> getRoomByIdAsync(@PathVariable Long id) {
+        return roomService.getRoomByIdAsync(id)
+                .thenApply(ResponseEntity::ok);
     }
 
     // This endpoint allows for creating a new room
@@ -60,12 +63,14 @@ public class RoomController {
         return ResponseEntity.noContent().build();
     }
 
-    // This endpoint allows for retrieving all rooms that are available for a given date and time range
+    // This endpoint allows for retrieving all rooms that are available for a
+    // given date and time range asynchronously
     @GetMapping("/available")
-    public ResponseEntity<List<RoomDto>> findAvailableRooms(
+    public CompletableFuture<ResponseEntity<List<RoomDto>>> findAvailableRoomsAsync(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime startTime,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime endTime) {
-        return ResponseEntity.ok(roomService.findAvailableRooms(date, startTime, endTime));
+        return roomService.findAvailableRoomsAsync(date, startTime, endTime)
+                .thenApply(ResponseEntity::ok);
     }
 }

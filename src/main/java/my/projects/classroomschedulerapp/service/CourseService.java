@@ -8,9 +8,13 @@ import my.projects.classroomschedulerapp.repository.CourseRepository;
 import my.projects.classroomschedulerapp.repository.ProgramRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,10 +31,35 @@ public class CourseService {
         this.programRepository = departmentRepository;
     }
 
+    // Asynchronous method to get all courses
+    @Async("taskExecutor")
+    public CompletableFuture<List<CourseDto>> getAllCoursesAsync() {
+        logger.debug("Asynchronously fetching all courses");
+        List<CourseDto> courses = getAllCourses();
+        return CompletableFuture.completedFuture(courses);
+    }
+
+    // Asynchronous method to get course by ID
+    @Async("taskExecutor")
+    public CompletableFuture<CourseDto> getCourseByIdAsync(Long id) {
+        logger.debug("Asynchronously fetching course with id: {}", id);
+        CourseDto course = getCourseById(id);
+        return CompletableFuture.completedFuture(course);
+    }
+
+    // Asynchronous method to get courses by program ID
+    @Async("taskExecutor")
+    public CompletableFuture<List<CourseDto>> getCoursesByProgramAsync(Long programId) {
+        logger.debug("Asynchronously fetching courses for program id: {}", programId);
+        List<CourseDto> courses = getCoursesByProgram(programId);
+        return CompletableFuture.completedFuture(courses);
+    }
+
     // Get all courses
+    @Transactional(readOnly = true)
     public List<CourseDto> getAllCourses() {
         logger.debug("Fetching all courses");
-        List<CourseDto> courses = courseRepository.findAll().stream()
+        List<CourseDto> courses = courseRepository.findAll().parallelStream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
         logger.debug("Found {} courses", courses.size());
@@ -38,6 +67,8 @@ public class CourseService {
     }
 
     // Get course by ID
+    @Transactional(readOnly = true)
+    @Cacheable(value = "courseDetails", key = "#id")
     public CourseDto getCourseById(Long id) {
         logger.debug("Fetching course with id: {}", id);
         Course course = courseRepository.findById(id)
@@ -50,6 +81,8 @@ public class CourseService {
     }
 
     // Get courses by program ID
+    @Transactional(readOnly = true)
+    @Cacheable(value = "coursesByProgram", key = "#programId")
     public List<CourseDto> getCoursesByProgram(Long programId) {
         logger.debug("Fetching courses for program id: {}", programId);
 
@@ -58,7 +91,7 @@ public class CourseService {
             throw new ResourceNotFoundException("Program not found with id: " + programId);
         }
 
-        List<CourseDto> courses = courseRepository.findByProgramId(programId).stream()
+        List<CourseDto> courses = courseRepository.findByProgramId(programId).parallelStream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
 
@@ -67,6 +100,7 @@ public class CourseService {
     }
 
     // Create a new course
+    @Transactional
     public CourseDto createCourse(CourseDto courseDto) {
         logger.info("Creating new course: {}", courseDto.getCourseCode());
 
@@ -82,6 +116,7 @@ public class CourseService {
     }
 
     // Update an existing course
+    @Transactional
     public CourseDto updateCourse(Long id, CourseDto courseDto) {
         logger.info("Updating course with id: {}", id);
 
@@ -112,6 +147,7 @@ public class CourseService {
     }
 
     // Delete a course
+    @Transactional
     public void deleteCourse(Long id) {
         logger.info("Deleting course with id: {}", id);
 

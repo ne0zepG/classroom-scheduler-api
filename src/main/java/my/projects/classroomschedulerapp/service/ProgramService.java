@@ -8,9 +8,13 @@ import my.projects.classroomschedulerapp.repository.DepartmentRepository;
 import my.projects.classroomschedulerapp.repository.ProgramRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,10 +30,34 @@ public class ProgramService {
         this.departmentRepository = departmentRepository;
     }
 
+    // Asynchronous method to get all programs
+    @Async("taskExecutor")
+    public CompletableFuture<List<ProgramDto>> getAllProgramsAsync() {
+        logger.debug("Asynchronously fetching all programs");
+        List<ProgramDto> programs = getAllPrograms();
+        return CompletableFuture.completedFuture(programs);
+    }
+
+    // Asynchronous method to get programs by department
+    @Async("taskExecutor")
+    public CompletableFuture<List<ProgramDto>> getProgramsByDepartmentAsync(Long departmentId) {
+        logger.debug("Asynchronously fetching programs for department id: {}", departmentId);
+        List<ProgramDto> programs = getProgramsByDepartment(departmentId);
+        return CompletableFuture.completedFuture(programs);
+    }
+
+    @Async("taskExecutor")
+    public CompletableFuture<ProgramDto> getProgramByIdAsync(Long id) {
+        logger.debug("Asynchronously fetching program with id: {}", id);
+        ProgramDto program = getProgramById(id);
+        return CompletableFuture.completedFuture(program);
+    }
+
     // Get all programs
+    @Transactional(readOnly = true)
     public List<ProgramDto> getAllPrograms() {
         logger.debug("Fetching all programs");
-        List<ProgramDto> programs = programRepository.findAll().stream()
+        List<ProgramDto> programs = programRepository.findAll().parallelStream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
         logger.debug("Found {} programs", programs.size());
@@ -37,6 +65,8 @@ public class ProgramService {
     }
 
     // Get program by ID
+    @Transactional(readOnly = true)
+    @Cacheable(value = "programDetails", key = "#id")
     public ProgramDto getProgramById(Long id) {
         logger.debug("Fetching program with id: {}", id);
         Program program = programRepository.findById(id)
@@ -49,6 +79,8 @@ public class ProgramService {
     }
 
     // Get programs by department ID
+    @Transactional(readOnly = true)
+    @Cacheable(value = "programsByDepartment", key = "#departmentId")
     public List<ProgramDto> getProgramsByDepartment(Long departmentId) {
         logger.debug("Fetching programs for department id: {}", departmentId);
 
@@ -57,7 +89,7 @@ public class ProgramService {
             throw new ResourceNotFoundException("Department not found with id: " + departmentId);
         }
 
-        List<ProgramDto> programs = programRepository.findByDepartmentId(departmentId).stream()
+        List<ProgramDto> programs = programRepository.findByDepartmentId(departmentId).parallelStream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
 
@@ -66,6 +98,7 @@ public class ProgramService {
     }
 
     // Create a new program
+    @Transactional
     public ProgramDto createProgram(ProgramDto programDto) {
         logger.info("Creating new program: {}", programDto.getName());
 
@@ -81,6 +114,7 @@ public class ProgramService {
     }
 
     // Update an existing program
+    @Transactional
     public ProgramDto updateProgram(Long id, ProgramDto programDto) {
         logger.info("Updating program with id: {}", id);
 
@@ -111,6 +145,7 @@ public class ProgramService {
     }
 
     // Delete a program
+    @Transactional
     public void deleteProgram(Long id) {
         logger.info("Deleting program with id: {}", id);
 
