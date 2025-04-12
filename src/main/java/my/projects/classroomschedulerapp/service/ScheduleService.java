@@ -68,13 +68,14 @@ public class ScheduleService {
         return CompletableFuture.completedFuture(schedules);
     }
 
-    // Asynchronous method to get schedules by user ID
+    // Asynchronous method to create recurring schedule
     @Async("taskExecutor")
     public CompletableFuture<List<ScheduleDto>> createRecurringScheduleAsync(RecurringScheduleRequestDto requestDto) {
         List<ScheduleDto> schedules = self.getObject().createRecurringSchedule(requestDto);
         return CompletableFuture.completedFuture(schedules);
     }
 
+    // Asynchronous method to get schedules by id
     @Async("taskExecutor")
     public CompletableFuture<ScheduleDto> getScheduleByIdAsync(Long id) {
         logger.debug("Asynchronously fetching schedule with id: {}", id);
