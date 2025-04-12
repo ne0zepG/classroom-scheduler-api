@@ -12,13 +12,17 @@ import java.util.Arrays;
 @Configuration
 @EnableCaching
 public class CacheConfig {
+
+    // This configuration class enables caching in the application
     @Bean
     public CacheManager cacheManager() {
         SimpleCacheManager cacheManager = new SimpleCacheManager();
         cacheManager.setCaches(Arrays.asList(
                 new ConcurrentMapCache("schedulesByDate"),
                 new ConcurrentMapCache("scheduleDetails"),
-                new ConcurrentMapCache("userDetails")
+                new ConcurrentMapCache("userDetails"),
+                new ConcurrentMapCache("roomDetails"),
+                new ConcurrentMapCache("availableRooms")
         ));
         return cacheManager;
     }

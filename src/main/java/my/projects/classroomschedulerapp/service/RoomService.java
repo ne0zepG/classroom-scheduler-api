@@ -8,11 +8,15 @@ import my.projects.classroomschedulerapp.repository.BuildingRepository;
 import my.projects.classroomschedulerapp.repository.RoomRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,18 +33,34 @@ public class RoomService {
         this.buildingRepository = buildingRepository;
     }
 
+    @Async("taskExecutor")
+    public CompletableFuture<List<RoomDto>> getAllRoomsAsync() {
+        logger.debug("Asynchronously fetching all rooms");
+        List<RoomDto> rooms = getAllRooms();
+        return CompletableFuture.completedFuture(rooms);
+    }
+
+    @Async("taskExecutor")
+    public CompletableFuture<List<RoomDto>> findAvailableRoomsAsync(LocalDate date, LocalTime startTime, LocalTime endTime) {
+        logger.debug("Asynchronously finding available rooms for date: {}, time: {}-{}", date, startTime, endTime);
+        List<RoomDto> availableRooms = findAvailableRooms(date, startTime, endTime);
+        return CompletableFuture.completedFuture(availableRooms);
+    }
+
     // Get all rooms
+    @Transactional(readOnly = true)
     public List<RoomDto> getAllRooms() {
         logger.debug("Fetching all rooms");
-        List<RoomDto> rooms = roomRepository.findAll().stream()
+        List<RoomDto> rooms = roomRepository.findAll().parallelStream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
         logger.debug("Found {} rooms", rooms.size());
         return rooms;
     }
 
-
     // Get room by ID
+    @Transactional(readOnly = true)
+    @Cacheable(value = "roomDetails", key = "#id")
     public RoomDto getRoomById(Long id) {
         logger.debug("Fetching room with id: {}", id);
         Room room = roomRepository.findById(id)
@@ -53,6 +73,7 @@ public class RoomService {
     }
 
     // Create a new room
+    @Transactional
     public RoomDto createRoom(RoomDto roomDto) {
         logger.info("Creating new room: {}", roomDto.getRoomNumber());
         try {
@@ -67,6 +88,7 @@ public class RoomService {
     }
 
     // Update an existing room
+    @Transactional
     public RoomDto updateRoom(Long id, RoomDto roomDto) {
         logger.info("Updating room with id: {}", id);
 
@@ -98,6 +120,7 @@ public class RoomService {
     }
 
     // Delete a room
+    @Transactional
     public void deleteRoom(Long id) {
         logger.info("Deleting room with id: {}", id);
         if (!roomRepository.existsById(id)) {
@@ -109,9 +132,11 @@ public class RoomService {
     }
 
     // Find available rooms for a given date and time
+    @Transactional(readOnly = true)
+    @Cacheable(value = "availableRooms", key = "{#date.toString(), #startTime.toString(), #endTime.toString()}")
     public List<RoomDto> findAvailableRooms(LocalDate date, LocalTime startTime, LocalTime endTime) {
         logger.debug("Finding available rooms for date: {}, time: {}-{}", date, startTime, endTime);
-        List<RoomDto> availableRooms = roomRepository.findAvailableRooms(date, startTime, endTime).stream()
+        List<RoomDto> availableRooms = roomRepository.findAvailableRooms(date, startTime, endTime).parallelStream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
         logger.debug("Found {} available rooms", availableRooms.size());

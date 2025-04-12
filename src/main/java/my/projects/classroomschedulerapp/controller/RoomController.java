@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/api/rooms")
@@ -31,8 +32,9 @@ public class RoomController {
 
     // This endpoint allows for retrieving all rooms
     @GetMapping
-    public ResponseEntity<List<RoomDto>> getAllRooms() {
-        return ResponseEntity.ok(roomService.getAllRooms());
+    public CompletableFuture<ResponseEntity<List<RoomDto>>> getAllRoomsAsync() {
+        return roomService.getAllRoomsAsync()
+                .thenApply(ResponseEntity::ok);
     }
 
     // This endpoint allows for retrieving a room by its ID
@@ -62,10 +64,11 @@ public class RoomController {
 
     // This endpoint allows for retrieving all rooms that are available for a given date and time range
     @GetMapping("/available")
-    public ResponseEntity<List<RoomDto>> findAvailableRooms(
+    public CompletableFuture<ResponseEntity<List<RoomDto>>> findAvailableRoomsAsync(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime startTime,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime endTime) {
-        return ResponseEntity.ok(roomService.findAvailableRooms(date, startTime, endTime));
+        return roomService.findAvailableRoomsAsync(date, startTime, endTime)
+                .thenApply(ResponseEntity::ok);
     }
 }
