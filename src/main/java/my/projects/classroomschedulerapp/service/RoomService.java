@@ -33,6 +33,7 @@ public class RoomService {
         this.buildingRepository = buildingRepository;
     }
 
+    // Asynchronous method to get all rooms
     @Async("taskExecutor")
     public CompletableFuture<List<RoomDto>> getAllRoomsAsync() {
         logger.debug("Asynchronously fetching all rooms");
@@ -40,6 +41,7 @@ public class RoomService {
         return CompletableFuture.completedFuture(rooms);
     }
 
+    // Asynchronous method to find available rooms
     @Async("taskExecutor")
     public CompletableFuture<List<RoomDto>> findAvailableRoomsAsync(LocalDate date, LocalTime startTime, LocalTime endTime) {
         logger.debug("Asynchronously finding available rooms for date: {}, time: {}-{}", date, startTime, endTime);
