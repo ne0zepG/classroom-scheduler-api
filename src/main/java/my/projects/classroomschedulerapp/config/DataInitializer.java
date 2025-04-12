@@ -286,6 +286,8 @@ public class DataInitializer implements CommandLineRunner {
             schedule1.setEndTime(LocalTime.of(10, 30));
             schedule1.setCourse(courses.get("Computer Engineering as Discipline"));
             schedule1.setStatus(Schedule.Status.APPROVED);
+            schedule1.setCreatedByEmail(faculty.getEmail());
+            schedule1.setUpdatedByEmail(admin.getEmail());
             scheduleRepository.save(schedule1);
 
             Schedule schedule2 = new Schedule();
@@ -296,6 +298,8 @@ public class DataInitializer implements CommandLineRunner {
             schedule2.setEndTime(LocalTime.of(14, 30));
             schedule2.setCourse(courses.get("Living in I.T. Era"));
             schedule2.setStatus(Schedule.Status.APPROVED);
+            schedule2.setCreatedByEmail(faculty.getEmail());
+            schedule2.setUpdatedByEmail(admin.getEmail());
             scheduleRepository.save(schedule2);
 
             Schedule schedule3 = new Schedule();
@@ -306,6 +310,8 @@ public class DataInitializer implements CommandLineRunner {
             schedule3.setEndTime(LocalTime.of(12, 0));
             schedule3.setCourse(courses.get("Discrete Mathematics"));
             schedule3.setStatus(Schedule.Status.APPROVED);
+            schedule3.setCreatedByEmail(faculty.getEmail());
+            schedule3.setUpdatedByEmail(admin.getEmail());
             scheduleRepository.save(schedule3);
 
             Schedule schedule4 = new Schedule();
@@ -316,6 +322,8 @@ public class DataInitializer implements CommandLineRunner {
             schedule4.setEndTime(LocalTime.of(15, 30));
             schedule4.setCourse(courses.get("Environmental Science and Engineering"));
             schedule4.setStatus(Schedule.Status.PENDING);
+            schedule4.setCreatedByEmail(faculty.getEmail());
+            schedule4.setUpdatedByEmail(admin.getEmail());
             scheduleRepository.save(schedule4);
 
             Schedule schedule5 = new Schedule();
@@ -326,6 +334,8 @@ public class DataInitializer implements CommandLineRunner {
             schedule5.setEndTime(LocalTime.of(11, 30));
             schedule5.setCourse(courses.get("Numerical Methods"));
             schedule5.setStatus(Schedule.Status.APPROVED);
+            schedule5.setCreatedByEmail(faculty.getEmail());
+            schedule5.setUpdatedByEmail(admin.getEmail());
             scheduleRepository.save(schedule5);
         }
     }
