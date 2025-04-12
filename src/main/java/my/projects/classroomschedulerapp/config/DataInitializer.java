@@ -1,18 +1,18 @@
 package my.projects.classroomschedulerapp.config;
 
-import my.projects.classroomschedulerapp.model.Course;
-import my.projects.classroomschedulerapp.model.Schedule;
 import my.projects.classroomschedulerapp.model.Building;
+import my.projects.classroomschedulerapp.model.Course;
 import my.projects.classroomschedulerapp.model.Department;
 import my.projects.classroomschedulerapp.model.Program;
 import my.projects.classroomschedulerapp.model.Room;
+import my.projects.classroomschedulerapp.model.Schedule;
 import my.projects.classroomschedulerapp.model.User;
-import my.projects.classroomschedulerapp.repository.CourseRepository;
-import my.projects.classroomschedulerapp.repository.ScheduleRepository;
 import my.projects.classroomschedulerapp.repository.BuildingRepository;
+import my.projects.classroomschedulerapp.repository.CourseRepository;
 import my.projects.classroomschedulerapp.repository.DepartmentRepository;
 import my.projects.classroomschedulerapp.repository.ProgramRepository;
 import my.projects.classroomschedulerapp.repository.RoomRepository;
+import my.projects.classroomschedulerapp.repository.ScheduleRepository;
 import my.projects.classroomschedulerapp.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
