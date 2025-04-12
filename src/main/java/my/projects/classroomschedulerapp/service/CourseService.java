@@ -8,6 +8,7 @@ import my.projects.classroomschedulerapp.repository.CourseRepository;
 import my.projects.classroomschedulerapp.repository.ProgramRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -20,13 +21,17 @@ import java.util.stream.Collectors;
 @Service
 public class CourseService {
 
+    private final ObjectProvider<CourseService> self;
+
     private static final Logger logger = LoggerFactory.getLogger(CourseService.class);
 
     private final CourseRepository courseRepository;
     private final ProgramRepository programRepository;
 
 
-    public CourseService(CourseRepository courseRepository, ProgramRepository departmentRepository) {
+    public CourseService(ObjectProvider<CourseService> self,
+                         CourseRepository courseRepository, ProgramRepository departmentRepository) {
+        this.self = self;
         this.courseRepository = courseRepository;
         this.programRepository = departmentRepository;
     }
@@ -35,7 +40,7 @@ public class CourseService {
     @Async("taskExecutor")
     public CompletableFuture<List<CourseDto>> getAllCoursesAsync() {
         logger.debug("Asynchronously fetching all courses");
-        List<CourseDto> courses = getAllCourses();
+        List<CourseDto> courses = self.getObject().getAllCourses();
         return CompletableFuture.completedFuture(courses);
     }
 
@@ -43,7 +48,7 @@ public class CourseService {
     @Async("taskExecutor")
     public CompletableFuture<CourseDto> getCourseByIdAsync(Long id) {
         logger.debug("Asynchronously fetching course with id: {}", id);
-        CourseDto course = getCourseById(id);
+        CourseDto course = self.getObject().getCourseById(id);
         return CompletableFuture.completedFuture(course);
     }
 
@@ -51,7 +56,7 @@ public class CourseService {
     @Async("taskExecutor")
     public CompletableFuture<List<CourseDto>> getCoursesByProgramAsync(Long programId) {
         logger.debug("Asynchronously fetching courses for program id: {}", programId);
-        List<CourseDto> courses = getCoursesByProgram(programId);
+        List<CourseDto> courses = self.getObject().getCoursesByProgram(programId);
         return CompletableFuture.completedFuture(courses);
     }
 
