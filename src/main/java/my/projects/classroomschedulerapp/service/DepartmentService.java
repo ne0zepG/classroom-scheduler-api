@@ -6,6 +6,7 @@ import my.projects.classroomschedulerapp.model.Department;
 import my.projects.classroomschedulerapp.repository.DepartmentRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -18,11 +19,15 @@ import java.util.stream.Collectors;
 @Service
 public class DepartmentService {
 
+    private final ObjectProvider<DepartmentService> self;
+
     private static final Logger logger = LoggerFactory.getLogger(DepartmentService.class);
 
     private final DepartmentRepository departmentRepository;
 
-    public DepartmentService(DepartmentRepository departmentRepository) {
+    public DepartmentService(ObjectProvider<DepartmentService> self,
+                             DepartmentRepository departmentRepository) {
+        this.self = self;
         this.departmentRepository = departmentRepository;
     }
 
@@ -30,7 +35,7 @@ public class DepartmentService {
     @Async("taskExecutor")
     public CompletableFuture<List<DepartmentDto>> getAllDepartmentsAsync() {
         logger.debug("Asynchronously fetching all departments");
-        List<DepartmentDto> departments = getAllDepartments();
+        List<DepartmentDto> departments = self.getObject().getAllDepartments();
         return CompletableFuture.completedFuture(departments);
     }
 
@@ -38,7 +43,7 @@ public class DepartmentService {
     @Async("taskExecutor")
     public CompletableFuture<DepartmentDto> getDepartmentByIdAsync(Long id) {
         logger.debug("Asynchronously fetching department with id: {}", id);
-        DepartmentDto department = getDepartmentById(id);
+        DepartmentDto department = self.getObject().getDepartmentById(id);
         return CompletableFuture.completedFuture(department);
     }
 

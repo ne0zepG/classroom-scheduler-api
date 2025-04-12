@@ -8,6 +8,7 @@ import my.projects.classroomschedulerapp.repository.DepartmentRepository;
 import my.projects.classroomschedulerapp.repository.ProgramRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -20,12 +21,16 @@ import java.util.stream.Collectors;
 @Service
 public class ProgramService {
 
+    private final ObjectProvider<ProgramService> self;
+
     private static final Logger logger = LoggerFactory.getLogger(ProgramService.class);
 
     private final ProgramRepository programRepository;
     private final DepartmentRepository departmentRepository;
 
-    public ProgramService(ProgramRepository programRepository, DepartmentRepository departmentRepository) {
+    public ProgramService(ObjectProvider<ProgramService> self,
+                          ProgramRepository programRepository, DepartmentRepository departmentRepository) {
+        this.self = self;
         this.programRepository = programRepository;
         this.departmentRepository = departmentRepository;
     }
@@ -34,7 +39,7 @@ public class ProgramService {
     @Async("taskExecutor")
     public CompletableFuture<List<ProgramDto>> getAllProgramsAsync() {
         logger.debug("Asynchronously fetching all programs");
-        List<ProgramDto> programs = getAllPrograms();
+        List<ProgramDto> programs = self.getObject().getAllPrograms();
         return CompletableFuture.completedFuture(programs);
     }
 
@@ -42,14 +47,14 @@ public class ProgramService {
     @Async("taskExecutor")
     public CompletableFuture<List<ProgramDto>> getProgramsByDepartmentAsync(Long departmentId) {
         logger.debug("Asynchronously fetching programs for department id: {}", departmentId);
-        List<ProgramDto> programs = getProgramsByDepartment(departmentId);
+        List<ProgramDto> programs = self.getObject().getProgramsByDepartment(departmentId);
         return CompletableFuture.completedFuture(programs);
     }
 
     @Async("taskExecutor")
     public CompletableFuture<ProgramDto> getProgramByIdAsync(Long id) {
         logger.debug("Asynchronously fetching program with id: {}", id);
-        ProgramDto program = getProgramById(id);
+        ProgramDto program = self.getObject().getProgramById(id);
         return CompletableFuture.completedFuture(program);
     }
 
