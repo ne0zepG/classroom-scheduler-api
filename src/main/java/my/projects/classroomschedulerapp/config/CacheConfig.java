@@ -24,7 +24,8 @@ public class CacheConfig {
                 new ConcurrentMapCache("roomDetails"),
                 new ConcurrentMapCache("availableRooms"),
                 new ConcurrentMapCache("programDetails"),
-                new ConcurrentMapCache("programsByDepartment")
+                new ConcurrentMapCache("programsByDepartment"),
+                new ConcurrentMapCache("departmentDetails")
         ));
         return cacheManager;
     }
