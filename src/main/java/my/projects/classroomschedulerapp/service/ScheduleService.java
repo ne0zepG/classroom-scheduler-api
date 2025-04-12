@@ -67,6 +67,9 @@ public class ScheduleService {
         populateScheduleFromDto(schedule, entities.getRoom(), entities.getCourse(), entities.getUser(), scheduleDto);
         schedule.setStatus(Schedule.Status.PENDING);
 
+        // Set audit information
+        schedule.setCreatedByEmail(entities.getUser().getEmail());
+
         Schedule savedSchedule = scheduleRepository.save(schedule);
         return convertToDto(savedSchedule);
     }
@@ -87,6 +90,9 @@ public class ScheduleService {
         // Update schedule details
         populateScheduleFromDto(schedule, entities.getRoom(), entities.getCourse(), entities.getUser(), scheduleDto);
         // Note: We don't update the status here since that's done through a separate endpoint
+
+        // Set audit information
+        schedule.setUpdatedByEmail(entities.getUser().getEmail());
 
         Schedule updatedSchedule = scheduleRepository.save(schedule);
         return convertToDto(updatedSchedule);
@@ -188,6 +194,10 @@ public class ScheduleService {
             schedule.setCourse(course);
             schedule.setStatus(Schedule.Status.PENDING);
 
+            // Audit information
+            schedule.setCreatedByEmail(user.getEmail());
+            schedule.setUpdatedByEmail(user.getEmail());
+
             createdSchedules.add(scheduleRepository.save(schedule));
         }
 
@@ -228,7 +238,7 @@ public class ScheduleService {
     }
 
     // Batch update status for multiple schedules
-    public List<ScheduleDto> updateScheduleStatusBatch(List<Long> ids, Schedule.Status status) {
+    public List<ScheduleDto> updateScheduleStatusBatch(List<Long> ids, Schedule.Status status, User currentUser) {
         // Find all schedules with the given IDs
         List<Schedule> schedules = scheduleRepository.findAllById(ids);
 
@@ -241,6 +251,7 @@ public class ScheduleService {
         // Update status for all found schedules
         for (Schedule schedule : schedules) {
             schedule.setStatus(status);
+            schedule.setUpdatedByEmail(currentUser.getEmail());
         }
 
         // Save all at once (this uses a single transaction)
@@ -310,10 +321,36 @@ public class ScheduleService {
         schedule.setStartTime(scheduleDto.getStartTime());
         schedule.setEndTime(scheduleDto.getEndTime());
         schedule.setCourse(course);
+
+        // Set created by email if it's a new schedule (id is null)
+        if (schedule.getId() == null) {
+            schedule.setCreatedByEmail(user.getEmail());
+        }
+
+        // Always update the updated by email
+        schedule.setUpdatedByEmail(user.getEmail());
     }
 
     // Convert Schedule entity to ScheduleDto
     private ScheduleDto convertToDto(Schedule schedule) {
+        // TODO: Replace with actual user name retrieval
+        String createdByName = "admin@college.edu";
+        String updatedByName = "admin@college.edu";
+
+        if (schedule.getCreatedByEmail() != null) {
+            User createdBy = userRepository.findByEmail(schedule.getCreatedByEmail()).orElse(null);
+            if (createdBy != null) {
+                createdByName = createdBy.getName();
+            }
+        }
+
+        if (schedule.getUpdatedByEmail() != null) {
+            User updatedBy = userRepository.findByEmail(schedule.getUpdatedByEmail()).orElse(null);
+            if (updatedBy != null) {
+                updatedByName = updatedBy.getName();
+            }
+        }
+
         return new ScheduleDto(
                 schedule.getId(),
                 schedule.getRoom().getId(),
@@ -326,7 +363,13 @@ public class ScheduleService {
                 schedule.getCourse().getId(),
                 schedule.getCourse().getCourseCode(),
                 schedule.getCourse().getDescription(),
-                schedule.getStatus()
+                schedule.getStatus(),
+                schedule.getCreationDate(),
+                schedule.getLastUpdated(),
+                schedule.getCreatedByEmail(),
+                createdByName,
+                schedule.getUpdatedByEmail(),
+                updatedByName
         );
     }
     

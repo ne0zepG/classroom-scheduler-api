@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import my.projects.classroomschedulerapp.model.Schedule;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 @Data
@@ -24,4 +25,10 @@ public class ScheduleDto {
     private String courseCode;
     private String courseDescription;
     private Schedule.Status status;
+    private LocalDateTime creationDate;
+    private LocalDateTime lastUpdated;
+    private String createdByEmail;
+    private String createdByName;
+    private String updatedByEmail;
+    private String updatedByName;
 }
