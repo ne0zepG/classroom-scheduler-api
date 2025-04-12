@@ -49,6 +49,14 @@ public class RoomService {
         return CompletableFuture.completedFuture(availableRooms);
     }
 
+    // Asynchronous method to get room by ID
+    @Async("taskExecutor")
+    public CompletableFuture<RoomDto> getRoomByIdAsync(Long id) {
+        logger.debug("Asynchronously fetching room with id: {}", id);
+        RoomDto room = getRoomById(id);
+        return CompletableFuture.completedFuture(room);
+    }
+
     // Get all rooms
     @Transactional(readOnly = true)
     public List<RoomDto> getAllRooms() {

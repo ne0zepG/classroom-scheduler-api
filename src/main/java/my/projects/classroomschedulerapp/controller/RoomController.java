@@ -39,8 +39,9 @@ public class RoomController {
 
     // This endpoint allows for retrieving a room by its ID
     @GetMapping("/{id}")
-    public ResponseEntity<RoomDto> getRoomById(@PathVariable Long id) {
-        return ResponseEntity.ok(roomService.getRoomById(id));
+    public CompletableFuture<ResponseEntity<RoomDto>> getRoomByIdAsync(@PathVariable Long id) {
+        return roomService.getRoomByIdAsync(id)
+                .thenApply(ResponseEntity::ok);
     }
 
     // This endpoint allows for creating a new room
