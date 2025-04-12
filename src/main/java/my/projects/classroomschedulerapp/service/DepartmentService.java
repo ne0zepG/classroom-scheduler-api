@@ -6,9 +6,13 @@ import my.projects.classroomschedulerapp.model.Department;
 import my.projects.classroomschedulerapp.repository.DepartmentRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,10 +26,28 @@ public class DepartmentService {
         this.departmentRepository = departmentRepository;
     }
 
+    // Asynchronous method to get all departments
+    @Async("taskExecutor")
+    public CompletableFuture<List<DepartmentDto>> getAllDepartmentsAsync() {
+        logger.debug("Asynchronously fetching all departments");
+        List<DepartmentDto> departments = getAllDepartments();
+        return CompletableFuture.completedFuture(departments);
+    }
+
+    // Asynchronous method to get department by ID
+    @Async("taskExecutor")
+    public CompletableFuture<DepartmentDto> getDepartmentByIdAsync(Long id) {
+        logger.debug("Asynchronously fetching department with id: {}", id);
+        DepartmentDto department = getDepartmentById(id);
+        return CompletableFuture.completedFuture(department);
+    }
+
+
     // Get all departments
+    @Transactional(readOnly = true)
     public List<DepartmentDto> getAllDepartments() {
         logger.debug("Fetching all departments");
-        List<DepartmentDto> departments = departmentRepository.findAll().stream()
+        List<DepartmentDto> departments = departmentRepository.findAll().parallelStream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
         logger.debug("Found {} departments", departments.size());
@@ -33,6 +55,8 @@ public class DepartmentService {
     }
 
     // Get department by ID
+    @Transactional(readOnly = true)
+    @Cacheable(value = "departmentDetails", key = "#id")
     public DepartmentDto getDepartmentById(Long id) {
         logger.debug("Fetching department with id: {}", id);
         Department department = departmentRepository.findById(id)
@@ -45,6 +69,7 @@ public class DepartmentService {
     }
 
     // Create a new department
+    @Transactional
     public DepartmentDto createDepartment(DepartmentDto departmentDto) {
         logger.info("Creating new department: {}", departmentDto.getName());
         Department department = convertToEntity(departmentDto);
@@ -54,6 +79,7 @@ public class DepartmentService {
     }
 
     // Update an existing department
+    @Transactional
     public DepartmentDto updateDepartment(Long id, DepartmentDto departmentDto) {
         logger.info("Updating department with id: {}", id);
         Department department = departmentRepository.findById(id)
@@ -70,6 +96,7 @@ public class DepartmentService {
     }
 
     // Delete a department
+    @Transactional
     public void deleteDepartment(Long id) {
         logger.info("Deleting department with id: {}", id);
         if (!departmentRepository.existsById(id)) {

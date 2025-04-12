@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/api/programs")
@@ -24,22 +25,25 @@ public class ProgramController {
         this.programService = programService;
     }
 
-    // This endpoint allows for retrieving all programs
+    // This endpoint allows for retrieving all programs asynchronously
     @GetMapping
-    public ResponseEntity<List<ProgramDto>> getAllPrograms() {
-        return ResponseEntity.ok(programService.getAllPrograms());
+    public CompletableFuture<ResponseEntity<List<ProgramDto>>> getAllProgramsAsync() {
+        return programService.getAllProgramsAsync()
+                .thenApply(ResponseEntity::ok);
     }
 
-    // This endpoint allows for retrieving a program by its ID
+    // This endpoint allows for retrieving a program by its ID asynchronously
     @GetMapping("/{id}")
-    public ResponseEntity<ProgramDto> getProgramById(@PathVariable Long id) {
-        return ResponseEntity.ok(programService.getProgramById(id));
+    public CompletableFuture<ResponseEntity<ProgramDto>> getProgramByIdAsync(@PathVariable Long id) {
+        return programService.getProgramByIdAsync(id)
+                .thenApply(ResponseEntity::ok);
     }
 
-    // This endpoint allows for retrieving programs by department ID
+    // This endpoint allows for retrieving programs by department ID asynchronously
     @GetMapping("/department/{departmentId}")
-    public ResponseEntity<List<ProgramDto>> getProgramsByDepartment(@PathVariable Long departmentId) {
-        return ResponseEntity.ok(programService.getProgramsByDepartment(departmentId));
+    public CompletableFuture<ResponseEntity<List<ProgramDto>>> getProgramsByDepartmentAsync(@PathVariable Long departmentId) {
+        return programService.getProgramsByDepartmentAsync(departmentId)
+                .thenApply(ResponseEntity::ok);
     }
 
     // This endpoint allows for creating a new program
