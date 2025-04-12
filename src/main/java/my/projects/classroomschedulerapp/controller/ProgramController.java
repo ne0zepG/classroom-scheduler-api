@@ -25,21 +25,21 @@ public class ProgramController {
         this.programService = programService;
     }
 
-    // This endpoint allows for retrieving all programs
+    // This endpoint allows for retrieving all programs asynchronously
     @GetMapping
     public CompletableFuture<ResponseEntity<List<ProgramDto>>> getAllProgramsAsync() {
         return programService.getAllProgramsAsync()
                 .thenApply(ResponseEntity::ok);
     }
 
-    // This endpoint allows for retrieving a program by its ID
+    // This endpoint allows for retrieving a program by its ID asynchronously
     @GetMapping("/{id}")
     public CompletableFuture<ResponseEntity<ProgramDto>> getProgramByIdAsync(@PathVariable Long id) {
         return programService.getProgramByIdAsync(id)
                 .thenApply(ResponseEntity::ok);
     }
 
-    // This endpoint allows for retrieving programs by department ID
+    // This endpoint allows for retrieving programs by department ID asynchronously
     @GetMapping("/department/{departmentId}")
     public CompletableFuture<ResponseEntity<List<ProgramDto>>> getProgramsByDepartmentAsync(@PathVariable Long departmentId) {
         return programService.getProgramsByDepartmentAsync(departmentId)

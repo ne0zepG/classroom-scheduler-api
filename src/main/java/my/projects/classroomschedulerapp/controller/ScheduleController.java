@@ -44,7 +44,7 @@ public class ScheduleController {
         return ResponseEntity.ok(scheduleService.getAllSchedules());
     }
 
-    // This endpoint allows for retrieving a schedule by its ID
+    // This endpoint allows for retrieving a schedule by its ID asynchronously
     @GetMapping("/{id}")
     public CompletableFuture<ResponseEntity<ScheduleDto>> getScheduleByIdAsync(@PathVariable Long id) {
         return scheduleService.getScheduleByIdAsync(id)
@@ -80,7 +80,7 @@ public class ScheduleController {
         return ResponseEntity.noContent().build();
     }
 
-    // This endpoint allows for filtering schedules by date
+    // This endpoint allows for filtering schedules by date asynchronously
     @GetMapping("/date/{date}")
     public CompletableFuture<ResponseEntity<List<ScheduleDto>>> getScheduleByDateAsync(
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
@@ -100,7 +100,7 @@ public class ScheduleController {
         return ResponseEntity.ok(schedules);
     }
 
-    // This endpoint allows for creating a recurring schedule
+    // This endpoint allows for creating a recurring schedule asynchronously
     @PostMapping("/recurring")
     public CompletableFuture<ResponseEntity<List<ScheduleDto>>> createRecurringScheduleAsync(
             @RequestBody RecurringScheduleRequestDto requestDto) {

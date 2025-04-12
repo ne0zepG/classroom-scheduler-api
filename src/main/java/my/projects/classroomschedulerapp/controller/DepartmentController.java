@@ -25,14 +25,14 @@ public class DepartmentController {
         this.departmentService = departmentService;
     }
 
-    // This endpoint allows for retrieving all departments
+    // This endpoint allows for retrieving all departments asynchronously
     @GetMapping
     public CompletableFuture<ResponseEntity<List<DepartmentDto>>> getAllDepartmentsAsync() {
         return departmentService.getAllDepartmentsAsync()
                 .thenApply(ResponseEntity::ok);
     }
 
-    // This endpoint allows for retrieving a department by its ID
+    // This endpoint allows for retrieving a department by its ID asynchronously
     @GetMapping("/{id}")
     public CompletableFuture<ResponseEntity<DepartmentDto>> getDepartmentByIdAsync(@PathVariable Long id) {
         return departmentService.getDepartmentByIdAsync(id)

@@ -30,14 +30,14 @@ public class RoomController {
         this.roomService = roomService;
     }
 
-    // This endpoint allows for retrieving all rooms
+    // This endpoint allows for retrieving all rooms asynchronously
     @GetMapping
     public CompletableFuture<ResponseEntity<List<RoomDto>>> getAllRoomsAsync() {
         return roomService.getAllRoomsAsync()
                 .thenApply(ResponseEntity::ok);
     }
 
-    // This endpoint allows for retrieving a room by its ID
+    // This endpoint allows for retrieving a room by its ID asynchronously
     @GetMapping("/{id}")
     public CompletableFuture<ResponseEntity<RoomDto>> getRoomByIdAsync(@PathVariable Long id) {
         return roomService.getRoomByIdAsync(id)
@@ -63,7 +63,8 @@ public class RoomController {
         return ResponseEntity.noContent().build();
     }
 
-    // This endpoint allows for retrieving all rooms that are available for a given date and time range
+    // This endpoint allows for retrieving all rooms that are available for a
+    // given date and time range asynchronously
     @GetMapping("/available")
     public CompletableFuture<ResponseEntity<List<RoomDto>>> findAvailableRoomsAsync(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,

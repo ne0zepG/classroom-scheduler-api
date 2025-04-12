@@ -25,21 +25,21 @@ public class CourseController {
         this.courseService = courseService;
     }
 
-    // This endpoint allows for retrieving all courses
+    // This endpoint allows for retrieving all courses asynchronously
     @GetMapping
     public CompletableFuture<ResponseEntity<List<CourseDto>>> getAllCoursesAsync() {
         return courseService.getAllCoursesAsync()
                 .thenApply(ResponseEntity::ok);
     }
 
-    // This endpoint allows for retrieving a course by its ID
+    // This endpoint allows for retrieving a course by its ID asynchronously
     @GetMapping("/{id}")
     public CompletableFuture<ResponseEntity<CourseDto>> getCourseByIdAsync(@PathVariable Long id) {
         return courseService.getCourseByIdAsync(id)
                 .thenApply(ResponseEntity::ok);
     }
 
-    // This endpoint for getting courses by program ID
+    // This endpoint for getting courses by program ID asynchronously
     @GetMapping("/program/{programId}")
     public CompletableFuture<ResponseEntity<List<CourseDto>>> getCoursesByProgramAsync(@PathVariable Long programId) {
         return courseService.getCoursesByProgramAsync(programId)
