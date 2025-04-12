@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -67,8 +68,10 @@ public class Schedule {
 
     @Column(name = "updated_by_email")
     private String updatedByEmail;
-    
-    
+
+    @Version
+    private Long version;
+
     public enum Status {
         PENDING, APPROVED, REJECTED
     }

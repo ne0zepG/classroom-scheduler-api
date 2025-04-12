@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/api/schedules")
@@ -80,9 +81,10 @@ public class ScheduleController {
 
     // This endpoint allows for filtering schedules by date
     @GetMapping("/date/{date}")
-    public ResponseEntity<List<ScheduleDto>> getScheduleByDate(
+    public CompletableFuture<ResponseEntity<List<ScheduleDto>>> getScheduleByDateAsync(
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        return ResponseEntity.ok(scheduleService.getSchedulesByDate(date));
+        return scheduleService.getSchedulesByDateAsync(date)
+                .thenApply(ResponseEntity::ok);
     }
 
     // This endpoint allows for filtering schedules by user ID
@@ -99,9 +101,10 @@ public class ScheduleController {
 
     // This endpoint allows for creating a recurring schedule
     @PostMapping("/recurring")
-    public ResponseEntity<List<ScheduleDto>> createRecurringSchedule(@RequestBody RecurringScheduleRequestDto requestDto) {
-        List<ScheduleDto> createdSchedules = scheduleService.createRecurringSchedule(requestDto);
-        return new ResponseEntity<>(createdSchedules, HttpStatus.CREATED);
+    public CompletableFuture<ResponseEntity<List<ScheduleDto>>> createRecurringScheduleAsync(
+            @RequestBody RecurringScheduleRequestDto requestDto) {
+        return scheduleService.createRecurringScheduleAsync(requestDto)
+                .thenApply(schedules -> new ResponseEntity<>(schedules, HttpStatus.CREATED));
     }
 
     // This endpoint allows for batch updating of schedule statuses
