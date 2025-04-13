@@ -3,7 +3,7 @@
 A robust Spring Boot application for efficiently managing classroom schedules in
 educational institutions.
 
-## 📋 Features
+## ✨ Key Features
 
 - **Classroom Management**
 
