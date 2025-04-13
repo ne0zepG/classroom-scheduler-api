@@ -69,7 +69,7 @@ public class ScheduleController {
     // This endpoint allows for updating the status of a schedule
     @PatchMapping("/{id}/status")
     public ResponseEntity<ScheduleDto> updateScheduleStatus(
-            @PathVariable Long id, 
+            @PathVariable Long id,
             @RequestParam Schedule.Status status) {
         return ResponseEntity.ok(scheduleService.updateScheduleStatus(id, status));
     }

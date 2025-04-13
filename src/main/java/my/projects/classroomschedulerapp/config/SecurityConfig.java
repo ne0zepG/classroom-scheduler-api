@@ -22,19 +22,20 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(AbstractHttpConfigurer::disable)
-            .authorizeHttpRequests(authorize -> authorize
-            // Comment out the original configuration
-            //.requestMatchers("/api/auth/**").permitAll()
-            //.requestMatchers("/h2-console/**").permitAll()
-            //.anyRequest().authenticated()
-            
-            // Allow all requests without authentication
-            .anyRequest().permitAll()
-            )
-            .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()))
-            .httpBasic(httpBasic -> {});
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(authorize -> authorize
+                        // Comment out the original configuration
+                        //.requestMatchers("/api/auth/**").permitAll()
+                        //.requestMatchers("/h2-console/**").permitAll()
+                        //.anyRequest().authenticated()
+
+                        // Allow all requests without authentication
+                        .anyRequest().permitAll()
+                )
+                .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()))
+                .httpBasic(httpBasic -> {
+                });
 
         return http.build();
     }
@@ -48,7 +49,7 @@ public class SecurityConfig {
         configuration.setAllowedHeaders(Arrays.asList("authorization", "content-type", "x-auth-token"));
         configuration.setExposedHeaders(List.of("x-auth-token"));
         configuration.setAllowCredentials(true);
-        
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

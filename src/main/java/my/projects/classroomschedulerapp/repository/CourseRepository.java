@@ -10,6 +10,8 @@ import java.util.List;
 public interface CourseRepository extends JpaRepository<Course, Long> {
 
     Course findByCourseCode(String courseCode);
+
     List<Course> findByProgramId(Long programId);
+
     boolean existsByCourseCode(String courseCode);
 }

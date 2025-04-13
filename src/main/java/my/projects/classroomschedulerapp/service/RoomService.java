@@ -23,19 +23,16 @@ import java.util.stream.Collectors;
 @Service
 public class RoomService {
 
-    private final ObjectProvider<RoomService> self;
-
     private static final Logger logger = LoggerFactory.getLogger(RoomService.class);
-
-
+    private final ObjectProvider<RoomService> self;
     private final RoomRepository roomRepository;
     private final BuildingRepository buildingRepository;
 
-   public RoomService(ObjectProvider<RoomService> self,
-                      RoomRepository roomRepository, BuildingRepository buildingRepository) {
-       this.self = self;
-       this.roomRepository = roomRepository;
-       this.buildingRepository = buildingRepository;
+    public RoomService(ObjectProvider<RoomService> self,
+                       RoomRepository roomRepository, BuildingRepository buildingRepository) {
+        this.self = self;
+        this.roomRepository = roomRepository;
+        this.buildingRepository = buildingRepository;
     }
 
     // Asynchronous method to get all rooms
@@ -175,12 +172,12 @@ public class RoomService {
     private Room convertToEntity(RoomDto roomDto) {
         Room room = new Room();
         room.setRoomNumber(roomDto.getRoomNumber());
-        
+
         // Get building by ID
         Building building = buildingRepository.findById(roomDto.getBuildingId())
                 .orElseThrow(() -> new ResourceNotFoundException("Building not found with id: " + roomDto.getBuildingId()));
         room.setBuilding(building);
-        
+
         room.setCapacity(roomDto.getCapacity());
         room.setHasProjector(roomDto.isHasProjector());
         room.setHasComputers(roomDto.isHasComputers());

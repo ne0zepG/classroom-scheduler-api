@@ -18,19 +18,19 @@ public class GlobalExceptionHandler {
             ResourceNotFoundException ex, WebRequest request) {
         return createErrorResponse(ex.getMessage(), HttpStatus.NOT_FOUND, request);
     }
-    
+
     @ExceptionHandler(ScheduleConflictException.class)
     public ResponseEntity<Object> handleScheduleConflictException(
             ScheduleConflictException ex, WebRequest request) {
         return createErrorResponse(ex.getMessage(), HttpStatus.CONFLICT, request);
     }
-    
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleGlobalException(
             Exception ex, WebRequest request) {
         return createErrorResponse("An unexpected error occurred", HttpStatus.INTERNAL_SERVER_ERROR, request);
     }
-    
+
     private ResponseEntity<Object> createErrorResponse(
             String message, HttpStatus status, WebRequest request) {
         Map<String, Object> body = new HashMap<>();
@@ -39,7 +39,7 @@ public class GlobalExceptionHandler {
         body.put("error", status.getReasonPhrase());
         body.put("message", message);
         body.put("path", request.getDescription(false));
-        
+
         return new ResponseEntity<>(body, status);
     }
 }
