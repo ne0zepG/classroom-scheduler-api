@@ -37,15 +37,16 @@ import java.util.stream.Collectors;
 @Service
 public class ScheduleService {
 
-    private final ObjectProvider<ScheduleService> self;
-
     private static final Logger logger = LoggerFactory.getLogger(ScheduleService.class);
-
+    private final ObjectProvider<ScheduleService> self;
     private final ScheduleRepository scheduleRepository;
     private final RoomRepository roomRepository;
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
-
+    // DateTimeFormatter for AM/PM format
+    DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("h:mm a");
+    // More readable date format
+    DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy");
     public ScheduleService(ObjectProvider<ScheduleService> self,
                            ScheduleRepository scheduleRepository,
                            RoomRepository roomRepository,
@@ -56,11 +57,6 @@ public class ScheduleService {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
     }
-
-    // DateTimeFormatter for AM/PM format
-    DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("h:mm a");
-    // More readable date format
-    DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy");
 
     // Asynchronous method to get all schedules
     @Async("taskExecutor")
@@ -182,11 +178,6 @@ public class ScheduleService {
         Schedule updatedSchedule = scheduleRepository.save(schedule);
         logger.debug("Schedule updated successfully: {}", updatedSchedule.getId());
         return convertToDto(updatedSchedule);
-    }
-
-    // Utility class to hold entity lookup results
-    private record EntityResults(Room room, Course course, User user) {
-
     }
 
     // Delete schedule
@@ -572,5 +563,10 @@ public class ScheduleService {
         User user = userRepository.findByEmail(email).orElse(null);
         return user != null ? user.getName() : email;
     }
-    
+
+    // Utility class to hold entity lookup results
+    private record EntityResults(Room room, Course course, User user) {
+
+    }
+
 }

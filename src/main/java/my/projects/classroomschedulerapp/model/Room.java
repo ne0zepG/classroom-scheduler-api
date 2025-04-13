@@ -25,20 +25,20 @@ public class Room {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @Column(nullable = false, unique = true)
     private String roomNumber;
 
     @ManyToOne
     @JoinColumn(name = "building_id", nullable = false)
     private Building building;
-    
+
     private int capacity;
-    
+
     private boolean hasProjector;
-    
+
     private boolean hasComputers;
-    
+
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL)
     private List<Schedule> schedules;
 }

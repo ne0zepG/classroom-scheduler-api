@@ -1,23 +1,25 @@
 # 📌 Classroom Scheduling System API
 
-A robust Spring Boot application for managing classroom scheduling in an educational environment. The system allows for room management, scheduling, and user-based access control.
+A robust Spring Boot application for managing classroom scheduling in an
+educational environment. The system allows for room management, scheduling, and
+user-based access control.
 
 ## 📋 Features
 
 - **Room Management**
-  - View available rooms.
-  - Filter rooms by capacity, equipment, and availability.
-  - Add, update, and remove classroom resources.
+    - View available rooms.
+    - Filter rooms by capacity, equipment, and availability.
+    - Add, update, and remove classroom resources.
 - **Scheduling System**
 
-  - Create, update, and cancel room schedules.
-  - View upcoming and past reservations.
-  - Check room availability by date and time slots.
-  - Automated conflict detection to prevent double schedules.
+    - Create, update, and cancel room schedules.
+    - View upcoming and past reservations.
+    - Check room availability by date and time slots.
+    - Automated conflict detection to prevent double schedules.
 
 - **User Management**
-  - Role-based access control (Admin, Faculty, Student).
-  - User authentication and authorization.
+    - Role-based access control (Admin, Faculty, Student).
+    - User authentication and authorization.
 
 ## 🛠️ Technology Stack
 
@@ -83,14 +85,16 @@ git commit -m "Clear description of changes"
 
 4. Create a pull request from your feature_branch to dev branch.
 
-   - Provide a clear description of the changes.
-   - Reference any related issues.
-   - Request review from maintainers.
-   - Address any feedback from code reviews.
+    - Provide a clear description of the changes.
+    - Reference any related issues.
+    - Request review from maintainers.
+    - Address any feedback from code reviews.
 
 ## 🔒 Security
 
-The current configuration allows all requests without authentication for development purposes. In a production environment, you should enable proper authentication and authorization.
+The current configuration allows all requests without authentication for
+development purposes. In a production environment, you should enable proper
+authentication and authorization.
 
 ## 📊 Sample Data
 

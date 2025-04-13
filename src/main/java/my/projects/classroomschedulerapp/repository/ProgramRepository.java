@@ -9,6 +9,8 @@ import java.util.List;
 @Repository
 public interface ProgramRepository extends JpaRepository<Program, Long> {
     List<Program> findByDepartmentId(Long departmentId);
+
     boolean existsByCode(String code);
+
     boolean existsByNameAndDepartmentId(String name, Long departmentId);
 }
