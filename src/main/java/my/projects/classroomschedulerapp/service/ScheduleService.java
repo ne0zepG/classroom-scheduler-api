@@ -412,8 +412,9 @@ public class ScheduleService {
 
     // Update the time conflict check to work with LocalTime directly
     private boolean hasTimeConflict(Schedule existingSchedule, LocalTime newStartTime, LocalTime newEndTime) {
-        return !newEndTime.isBefore(existingSchedule.getStartTime()) &&
-                !newStartTime.isAfter(existingSchedule.getEndTime());
+        // Flag as conflict if time periods actually overlap
+        return newStartTime.isBefore(existingSchedule.getEndTime()) &&
+                existingSchedule.getStartTime().isBefore(newEndTime);
     }
 
     // Helper method to find and validate entities
