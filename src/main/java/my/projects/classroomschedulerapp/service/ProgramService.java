@@ -21,10 +21,8 @@ import java.util.stream.Collectors;
 @Service
 public class ProgramService {
 
-    private final ObjectProvider<ProgramService> self;
-
     private static final Logger logger = LoggerFactory.getLogger(ProgramService.class);
-
+    private final ObjectProvider<ProgramService> self;
     private final ProgramRepository programRepository;
     private final DepartmentRepository departmentRepository;
 

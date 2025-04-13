@@ -38,7 +38,7 @@ public class DataInitializer implements CommandLineRunner {
     public DataInitializer(ScheduleRepository scheduleRepository, BuildingRepository buildingRepository,
                            RoomRepository roomRepository,
                            DepartmentRepository departmentRepository,
-                            ProgramRepository programRepository,
+                           ProgramRepository programRepository,
                            CourseRepository courseRepository,
                            UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.scheduleRepository = scheduleRepository;
@@ -76,7 +76,7 @@ public class DataInitializer implements CommandLineRunner {
         // Create buildings if they don't exist
         Map<String, Building> buildings = new HashMap<>();
         if (buildingRepository.count() == 0) {
-            Building stBuilding = new Building(); 
+            Building stBuilding = new Building();
             stBuilding.setName("ST Building");
             buildingRepository.save(stBuilding);
             buildings.put("ST Building", stBuilding);
@@ -85,15 +85,15 @@ public class DataInitializer implements CommandLineRunner {
             libBuilding.setName("Library Building");
             buildingRepository.save(libBuilding);
             buildings.put("Library Building", libBuilding);
-            
+
             Building adminBuilding = new Building();
             adminBuilding.setName("Admin Building");
             buildingRepository.save(adminBuilding);
             buildings.put("Admin Building", adminBuilding);
         } else {
             // Load existing buildings into map for reference
-            buildingRepository.findAll().forEach(building -> 
-                buildings.put(building.getName(), building));
+            buildingRepository.findAll().forEach(building ->
+                    buildings.put(building.getName(), building));
         }
 
         // Add example rooms if not exists
@@ -137,7 +137,7 @@ public class DataInitializer implements CommandLineRunner {
             libRoom.setHasProjector(true);
             libRoom.setHasComputers(true);
             roomRepository.save(libRoom);
-            
+
             Room adminRoom = new Room();
             adminRoom.setRoomNumber("ADM201");
             adminRoom.setBuilding(buildings.get("Admin Building"));

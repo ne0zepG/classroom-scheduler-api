@@ -13,13 +13,13 @@ import java.util.List;
 @Repository
 public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     List<Schedule> findByRoom(Room room);
-    
+
     List<Schedule> findByRoomAndDate(Room room, LocalDate date);
-    
+
     List<Schedule> findByUser(User user);
-    
+
     List<Schedule> findByDateBetween(LocalDate startDate, LocalDate endDate);
-    
+
     @Query("SELECT b FROM Schedule b WHERE b.date = ?1")
     List<Schedule> findAllSchedulesForDate(LocalDate date);
 }

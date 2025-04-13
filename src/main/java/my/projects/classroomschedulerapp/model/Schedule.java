@@ -30,28 +30,28 @@ public class Schedule {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @ManyToOne
     @JoinColumn(name = "room_id", nullable = false)
     private Room room;
-    
+
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
-    
+
     @Column(nullable = false)
     private LocalDate date;
-    
+
     @Column(nullable = false)
     private LocalTime startTime;
-    
+
     @Column(nullable = false)
     private LocalTime endTime;
 
     @ManyToOne
     @JoinColumn(name = "course_id", nullable = false)
     private Course course;
-    
+
     @Enumerated(EnumType.STRING)
     private Status status;
 

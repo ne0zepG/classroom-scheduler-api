@@ -19,10 +19,8 @@ import java.util.stream.Collectors;
 @Service
 public class DepartmentService {
 
-    private final ObjectProvider<DepartmentService> self;
-
     private static final Logger logger = LoggerFactory.getLogger(DepartmentService.class);
-
+    private final ObjectProvider<DepartmentService> self;
     private final DepartmentRepository departmentRepository;
 
     public DepartmentService(ObjectProvider<DepartmentService> self,
