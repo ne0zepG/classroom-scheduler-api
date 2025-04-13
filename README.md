@@ -1,25 +1,31 @@
 # 📌 Classroom Scheduling System API
 
-A robust Spring Boot application for managing classroom scheduling in an
-educational environment. The system allows for room management, scheduling, and
-user-based access control.
+A robust Spring Boot application for efficiently managing classroom schedules in
+educational institutions.
 
 ## 📋 Features
 
-- **Room Management**
-    - View available rooms.
-    - Filter rooms by capacity, equipment, and availability.
-    - Add, update, and remove classroom resources.
+- **Classroom Management**
+
+- View room availability through statistics dashboard with building, room, and
+  date filters.
+- Browse rooms by building and view room details including capacity and
+  available equipment.
+- Add, update, and remove classroom resources.
+- Manage room details including capacity and available equipment.
+- Hierarchical structure (Departments → Programs → Courses).
+
 - **Scheduling System**
 
-    - Create, update, and cancel room schedules.
-    - View upcoming and past reservations.
-    - Check room availability by date and time slots.
-    - Automated conflict detection to prevent double schedules.
+- Create single or recurring classroom schedules with customizable patterns
+  across multiple weeks.
+- View upcoming and past reservations.
+- Automated conflict detection to prevent double schedules.
+- Schedule approval workflow (Pending → Approved/Rejected).
 
 - **User Management**
-    - Role-based access control (Admin, Faculty, Student).
-    - User authentication and authorization.
+- Role-specific access (Admin, Faculty, Student).
+- Schedule history with audit information.
 
 ## 🛠️ Technology Stack
 
@@ -98,13 +104,4 @@ authentication and authorization.
 
 ## 📊 Sample Data
 
-The application initializes with sample data including:
-
-- Admin and faculty users
-- Several classrooms with different capacities and equipment
-- Sample schedules for demonstration purposes
-
-Default credentials:
-
-- Admin: admin@college.edu / admin123
-- Faculty: faculty@college.edu / faculty123
+The application initializes with sample data for testing purposes.
