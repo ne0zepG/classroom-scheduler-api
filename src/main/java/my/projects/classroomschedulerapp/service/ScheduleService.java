@@ -27,6 +27,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -125,23 +126,23 @@ public class ScheduleService {
         // Find and validate entities
         EntityResults entities = findAndValidateEntities(scheduleDto);
         logger.debug("Validated entities - room: {}, course: {}, user: {}",
-                entities.getRoom().getRoomNumber(),
-                entities.getCourse().getCourseCode(),
-                entities.getUser().getEmail());
+                entities.room().getRoomNumber(),
+                entities.course().getCourseCode(),
+                entities.user().getEmail());
 
 
         // Check for schedule conflicts
-        checkForScheduleConflicts(entities.getRoom(), scheduleDto.getDate(),
+        checkForScheduleConflicts(entities.room(), scheduleDto.getDate(),
                 scheduleDto.getStartTime(), scheduleDto.getEndTime(), null);
         logger.debug("No schedule conflicts found");
 
         // Create schedule
         Schedule schedule = new Schedule();
-        populateScheduleFromDto(schedule, entities.getRoom(), entities.getCourse(), entities.getUser(), scheduleDto);
+        populateScheduleFromDto(schedule, entities.room(), entities.course(), entities.user(), scheduleDto);
         schedule.setStatus(Schedule.Status.PENDING);
 
         // Set audit information
-        schedule.setCreatedByEmail(entities.getUser().getEmail());
+        schedule.setCreatedByEmail(entities.user().getEmail());
 
         Schedule savedSchedule = scheduleRepository.save(schedule);
         logger.debug("Schedule created successfully with id: {}", savedSchedule.getId());
@@ -160,44 +161,32 @@ public class ScheduleService {
         // Find and validate entities
         EntityResults entities = findAndValidateEntities(scheduleDto);
         logger.debug("Validated entities for update - room: {}, course: {}, user: {}",
-                entities.getRoom().getRoomNumber(),
-                entities.getCourse().getCourseCode(),
-                entities.getUser().getEmail());
+                entities.room().getRoomNumber(),
+                entities.course().getCourseCode(),
+                entities.user().getEmail());
 
         // Check for conflicts with other schedules (excluding this one)
-        checkForScheduleConflicts(entities.getRoom(), scheduleDto.getDate(),
+        checkForScheduleConflicts(entities.room(), scheduleDto.getDate(),
                 scheduleDto.getStartTime(), scheduleDto.getEndTime(), id);
         logger.debug("No schedule conflicts found for update");
 
         // Update schedule details
-        populateScheduleFromDto(schedule, entities.getRoom(), entities.getCourse(), entities.getUser(), scheduleDto);
+        populateScheduleFromDto(schedule, entities.room(), entities.course(), entities.user(), scheduleDto);
 
         // All schedule updates are sent to PENDING
         schedule.setStatus(Schedule.Status.PENDING);
 
         // Set audit information
-        schedule.setUpdatedByEmail(entities.getUser().getEmail());
+        schedule.setUpdatedByEmail(entities.user().getEmail());
 
         Schedule updatedSchedule = scheduleRepository.save(schedule);
         logger.debug("Schedule updated successfully: {}", updatedSchedule.getId());
         return convertToDto(updatedSchedule);
     }
-    
+
     // Utility class to hold entity lookup results
-    private static class EntityResults {
-        private final Room room;
-        private final Course course;
-        private final User user;
+    private record EntityResults(Room room, Course course, User user) {
 
-        public EntityResults(Room room, Course course, User user) {
-            this.room = room;
-            this.course = course;
-            this.user = user;
-        }
-
-        public Room getRoom() { return room; }
-        public Course getCourse() { return course; }
-        public User getUser() { return user; }
     }
 
     // Delete schedule
@@ -221,7 +210,8 @@ public class ScheduleService {
         List<ScheduleDto> scheduleDtoByDate = schedules.parallelStream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
-        logger.debug("Found {} schedules for date: {}", scheduleDtoByDate.size());
+        logger.debug("Found {} schedules for date: {}",
+                scheduleDtoByDate.size(), date);
         return scheduleDtoByDate;
     }
 
@@ -412,8 +402,9 @@ public class ScheduleService {
 
     // Update the time conflict check to work with LocalTime directly
     private boolean hasTimeConflict(Schedule existingSchedule, LocalTime newStartTime, LocalTime newEndTime) {
-        return !newEndTime.isBefore(existingSchedule.getStartTime()) &&
-                !newStartTime.isAfter(existingSchedule.getEndTime());
+        // Flag as conflict if time periods actually overlap
+        return newStartTime.isBefore(existingSchedule.getEndTime()) &&
+                existingSchedule.getStartTime().isBefore(newEndTime);
     }
 
     // Helper method to find and validate entities
@@ -439,25 +430,28 @@ public class ScheduleService {
                 room.getRoomNumber(), date, startTime, endTime, excludeScheduleId);
 
         List<Schedule> conflictingSchedules = scheduleRepository.findByRoomAndDate(room, date);
+        List<Schedule> actualConflicts = new ArrayList<>();
 
         for (Schedule existingSchedule : conflictingSchedules) {
             // Skip comparing with itself if updating
             if ((!existingSchedule.getId().equals(excludeScheduleId)) &&
                     hasTimeConflict(existingSchedule, startTime, endTime)) {
-
-                // Detailed conflict message with AM/PM time format
-                String errorMessage = String.format(
-                        "Room %s has scheduling conflicts:\n• %s from %s to %s for %s - %s (assigned to %s)",
-                        existingSchedule.getRoom().getRoomNumber(),
-                        existingSchedule.getDate().format(dateFormatter),
-                        existingSchedule.getStartTime().format(timeFormatter),
-                        existingSchedule.getEndTime().format(timeFormatter),
-                        existingSchedule.getCourse().getCourseCode(),
-                        existingSchedule.getCourse().getDescription(),
-                        existingSchedule.getUser().getName()
-                );
-                throw new ScheduleConflictException(errorMessage);
+                actualConflicts.add(existingSchedule);
             }
+        }
+
+        if (!actualConflicts.isEmpty()) {
+            // Sort conflicts by start time for readability
+            actualConflicts.sort(Comparator.comparing(Schedule::getStartTime));
+
+            // Build detailed conflict message with all conflicts
+            StringBuilder errorMessage = new StringBuilder("Room ")
+                    .append(room.getRoomNumber())
+                    .append(" has scheduling conflicts:");
+
+            scheduleConflicts(actualConflicts, errorMessage);
+
+            throw new ScheduleConflictException(errorMessage.toString());
         }
     }
 
@@ -465,74 +459,61 @@ public class ScheduleService {
     private void checkForConflictsInParallel(Room room, List<LocalDate> dates,
                                              LocalTime startTime, LocalTime endTime) {
 
-        // Map to store conflict details grouped by course/time (key = courseId, value = conflicts)
-        Map<Long, Map<String, Object>> conflictsByClass = new HashMap<>();
+        // Map to store conflicts by date (key = date, value = list of conflicts)
+        Map<LocalDate, List<Schedule>> conflictsByDate = new HashMap<>();
 
         dates.forEach(date -> {
             List<Schedule> existingSchedules = scheduleRepository.findByRoomAndDate(room, date);
+            List<Schedule> dateConflicts = new ArrayList<>();
+
             for (Schedule existing : existingSchedules) {
                 if (hasTimeConflict(existing, startTime, endTime)) {
-                    // Group conflicts by courseId to handle the case where different courses conflict
-                    Long courseId = existing.getCourse().getId();
-
-                    if (!conflictsByClass.containsKey(courseId)) {
-                        Map<String, Object> details = new HashMap<>();
-                        details.put("courseCode", existing.getCourse().getCourseCode());
-                        details.put("description", existing.getCourse().getDescription());
-                        details.put("startTime", existing.getStartTime());
-                        details.put("endTime", existing.getEndTime());
-                        details.put("userName", existing.getUser().getName());
-                        details.put("dates", new ArrayList<LocalDate>());
-
-                        conflictsByClass.put(courseId, details);
-                    }
-
-                    // Add the date to the list of conflict dates for this course
-                    @SuppressWarnings("unchecked")
-                    List<LocalDate> conflictDates = (List<LocalDate>) conflictsByClass.get(courseId).get("dates");
-                    conflictDates.add(date);
-
-                    // One conflict per date is enough
-                    break;
+                    dateConflicts.add(existing);
                 }
+            }
+
+            if (!dateConflicts.isEmpty()) {
+                // Sort conflicts by start time
+                dateConflicts.sort(Comparator.comparing(Schedule::getStartTime));
+                conflictsByDate.put(date, dateConflicts);
             }
         });
 
-        if (!conflictsByClass.isEmpty()) {
+        if (!conflictsByDate.isEmpty()) {
             StringBuilder errorMessage = new StringBuilder("Room ")
                     .append(room.getRoomNumber())
                     .append(" has scheduling conflicts:");
 
-            // For each conflicting course
-            conflictsByClass.forEach((courseId, details) -> {
-                @SuppressWarnings("unchecked")
-                List<LocalDate> conflictDates = (List<LocalDate>) details.get("dates");
+            // Sort dates for readability
+            List<LocalDate> sortedDates = new ArrayList<>(conflictsByDate.keySet());
+            Collections.sort(sortedDates);
 
-                // Sort dates for readability
-                Collections.sort(conflictDates);
+            for (LocalDate date : sortedDates) {
+                List<Schedule> conflicts = conflictsByDate.get(date);
 
-                // Format the dates as a comma-separated list
-                String formattedDates = conflictDates.stream()
-                        .map(date -> date.format(dateFormatter))
-                        .collect(Collectors.joining(", "));
-
-                // Build the message with all dates first, then the details
-                errorMessage.append("\n• ")
-                        .append(formattedDates)
-                        .append(" from ")
-                        .append(((LocalTime)details.get("startTime")).format(timeFormatter))
-                        .append(" to ")
-                        .append(((LocalTime)details.get("endTime")).format(timeFormatter))
-                        .append(" for ")
-                        .append(details.get("courseCode"))
-                        .append(" - ")
-                        .append(details.get("description"))
-                        .append(" (assigned to ")
-                        .append(details.get("userName"))
-                        .append(")");
-            });
+                scheduleConflicts(conflicts, errorMessage);
+            }
 
             throw new ScheduleConflictException(errorMessage.toString());
+        }
+    }
+
+    // Helper method to format and append conflicts to the error message
+    private void scheduleConflicts(List<Schedule> actualConflicts, StringBuilder errorMessage) {
+        for (Schedule conflict : actualConflicts) {
+            errorMessage.append("\n• ")
+                    .append(conflict.getDate().format(dateFormatter))
+                    .append(" from ")
+                    .append(conflict.getStartTime().format(timeFormatter))
+                    .append(" to ")
+                    .append(conflict.getEndTime().format(timeFormatter))
+                    .append(" for ")
+                    .append(conflict.getCourse().getCourseCode())
+                    .append(" - ")
+                    .append(conflict.getCourse().getDescription())
+                    .append(" (assigned to ")
+                    .append(conflict.getUser().getName())
+                    .append(")");
         }
     }
 
