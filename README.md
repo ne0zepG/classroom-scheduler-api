@@ -7,25 +7,23 @@ educational institutions.
 
 - **Classroom Management**
 
-- View room availability through statistics dashboard with building, room, and
-  date filters.
-- Browse rooms by building and view room details including capacity and
-  available equipment.
-- Add, update, and remove classroom resources.
-- Manage room details including capacity and available equipment.
-- Hierarchical structure (Departments → Programs → Courses).
+  - View room availability through statistics dashboard with building, room, and date filters.
+  - Browse rooms by building and view room details including capacity and available equipment.
+  - Add, update, and remove classroom resources.
+  - Manage room details including capacity and available equipment.
+  - Hierarchical structure (Departments → Programs → Courses).
 
 - **Scheduling System**
 
-- Create single or recurring classroom schedules with customizable patterns
-  across multiple weeks.
-- View upcoming and past reservations.
-- Automated conflict detection to prevent double schedules.
-- Schedule approval workflow (Pending → Approved/Rejected).
+  - Create single or recurring classroom schedules with customizable patterns across multiple weeks.
+  - View upcoming and past reservations.
+  - Automated conflict detection to prevent double schedules.
+  - Schedule approval workflow (Pending → Approved/Rejected).
 
 - **User Management**
-- Role-specific access (Admin, Faculty, Student).
-- Schedule history with audit information.
+
+  - Role-specific access (Admin, Faculty, Student).
+  - Schedule history with audit information.
 
 ## 🛠️ Technology Stack
 
@@ -91,10 +89,10 @@ git commit -m "Clear description of changes"
 
 4. Create a pull request from your feature_branch to dev branch.
 
-    - Provide a clear description of the changes.
-    - Reference any related issues.
-    - Request review from maintainers.
-    - Address any feedback from code reviews.
+   - Provide a clear description of the changes.
+   - Reference any related issues.
+   - Request review from maintainers.
+   - Address any feedback from code reviews.
 
 ## 🔒 Security
 
