@@ -125,23 +125,23 @@ public class ScheduleService {
         // Find and validate entities
         EntityResults entities = findAndValidateEntities(scheduleDto);
         logger.debug("Validated entities - room: {}, course: {}, user: {}",
-                entities.getRoom().getRoomNumber(),
-                entities.getCourse().getCourseCode(),
-                entities.getUser().getEmail());
+                entities.room().getRoomNumber(),
+                entities.course().getCourseCode(),
+                entities.user().getEmail());
 
 
         // Check for schedule conflicts
-        checkForScheduleConflicts(entities.getRoom(), scheduleDto.getDate(),
+        checkForScheduleConflicts(entities.room(), scheduleDto.getDate(),
                 scheduleDto.getStartTime(), scheduleDto.getEndTime(), null);
         logger.debug("No schedule conflicts found");
 
         // Create schedule
         Schedule schedule = new Schedule();
-        populateScheduleFromDto(schedule, entities.getRoom(), entities.getCourse(), entities.getUser(), scheduleDto);
+        populateScheduleFromDto(schedule, entities.room(), entities.course(), entities.user(), scheduleDto);
         schedule.setStatus(Schedule.Status.PENDING);
 
         // Set audit information
-        schedule.setCreatedByEmail(entities.getUser().getEmail());
+        schedule.setCreatedByEmail(entities.user().getEmail());
 
         Schedule savedSchedule = scheduleRepository.save(schedule);
         logger.debug("Schedule created successfully with id: {}", savedSchedule.getId());
@@ -160,23 +160,23 @@ public class ScheduleService {
         // Find and validate entities
         EntityResults entities = findAndValidateEntities(scheduleDto);
         logger.debug("Validated entities for update - room: {}, course: {}, user: {}",
-                entities.getRoom().getRoomNumber(),
-                entities.getCourse().getCourseCode(),
-                entities.getUser().getEmail());
+                entities.room().getRoomNumber(),
+                entities.course().getCourseCode(),
+                entities.user().getEmail());
 
         // Check for conflicts with other schedules (excluding this one)
-        checkForScheduleConflicts(entities.getRoom(), scheduleDto.getDate(),
+        checkForScheduleConflicts(entities.room(), scheduleDto.getDate(),
                 scheduleDto.getStartTime(), scheduleDto.getEndTime(), id);
         logger.debug("No schedule conflicts found for update");
 
         // Update schedule details
-        populateScheduleFromDto(schedule, entities.getRoom(), entities.getCourse(), entities.getUser(), scheduleDto);
+        populateScheduleFromDto(schedule, entities.room(), entities.course(), entities.user(), scheduleDto);
 
         // All schedule updates are sent to PENDING
         schedule.setStatus(Schedule.Status.PENDING);
 
         // Set audit information
-        schedule.setUpdatedByEmail(entities.getUser().getEmail());
+        schedule.setUpdatedByEmail(entities.user().getEmail());
 
         Schedule updatedSchedule = scheduleRepository.save(schedule);
         logger.debug("Schedule updated successfully: {}", updatedSchedule.getId());
@@ -184,20 +184,8 @@ public class ScheduleService {
     }
     
     // Utility class to hold entity lookup results
-    private static class EntityResults {
-        private final Room room;
-        private final Course course;
-        private final User user;
+    private record EntityResults(Room room, Course course, User user) {
 
-        public EntityResults(Room room, Course course, User user) {
-            this.room = room;
-            this.course = course;
-            this.user = user;
-        }
-
-        public Room getRoom() { return room; }
-        public Course getCourse() { return course; }
-        public User getUser() { return user; }
     }
 
     // Delete schedule
@@ -221,7 +209,8 @@ public class ScheduleService {
         List<ScheduleDto> scheduleDtoByDate = schedules.parallelStream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
-        logger.debug("Found {} schedules for date: {}", scheduleDtoByDate.size());
+        logger.debug("Found {} schedules for date: {}",
+                scheduleDtoByDate.size(), date);
         return scheduleDtoByDate;
     }
 
