@@ -183,7 +183,7 @@ public class ScheduleService {
         logger.debug("Schedule updated successfully: {}", updatedSchedule.getId());
         return convertToDto(updatedSchedule);
     }
-    
+
     // Utility class to hold entity lookup results
     private record EntityResults(Room room, Course course, User user) {
 
@@ -484,7 +484,7 @@ public class ScheduleService {
                     .append(room.getRoomNumber())
                     .append(" has scheduling conflicts:");
 
-                // Sort dates for readability
+            // Sort dates for readability
             List<LocalDate> sortedDates = new ArrayList<>(conflictsByDate.keySet());
             Collections.sort(sortedDates);
 
