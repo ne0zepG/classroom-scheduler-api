@@ -162,7 +162,9 @@ public class ScheduleService {
 
         // Update schedule details
         populateScheduleFromDto(schedule, entities.getRoom(), entities.getCourse(), entities.getUser(), scheduleDto);
-        // Note: We don't update the status here since that's done through a separate endpoint
+
+        // All schedule updates are sent to PENDING
+        schedule.setStatus(Schedule.Status.PENDING);
 
         // Set audit information
         schedule.setUpdatedByEmail(entities.getUser().getEmail());
