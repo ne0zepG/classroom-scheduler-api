@@ -27,7 +27,7 @@ educational institutions.
 
 ## 🛠️ Technology Stack
 
-- **Framework**: Spring Boot 3.4.4
+- **Framework**: Spring Boot 3.4.5
 - **Database**: MySQL (with H2 for development)
 - **ORM**: Spring Data JPA
 - **Security**: Spring Security
